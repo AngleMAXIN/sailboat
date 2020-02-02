@@ -6,10 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/url"
-	"strings"
-
-	"github.com/PuerkitoBio/goquery"
+	"sailboat/config"
 )
 
 var (
@@ -24,24 +21,56 @@ var (
 	}
 )
 
-func buildURL(baseURL string, params map[string]string) string {
-	u, err := url.Parse(baseURL)
-	if err != nil {
-		log.Println("parse url erorr:%s", err)
-	}
-	q := u.Query()
-	for key, values := range params {
-		q.Add(key, values)
-	}
-	u.RawQuery = q.Encode()
-	return u.String()
-
+type stockInfo struct {
+	// Code string
+	Record [][]string
 }
 
+// Spider 爬虫
+type Spider struct {
+	baseURL string
+	params  map[string]string
+	headers map[string]string
+}
+
+// StockList 股票列表
+type resStockList struct {
+	Data resStock `json:"data"`
+}
+
+type resStock struct {
+	Total int            `json:"total"`
+	Diff  []resStockName `json:"diff"`
+}
+
+// StockName 股票名称，代码
+type resStockName struct {
+	StockName string `json:"f14"`
+	StockID   string `json:"f12"`
+	StockCode string
+}
+
+// buildURL 构造完整的url
+// func buildURL(baseURL string, params map[string]string) string {
+// 	u, err := url.Parse(baseURL)
+// 	if err != nil {
+// 		log.Printf("parse url erorr:%s", err)
+// 	}
+// 	q := u.Query()
+// 	for key, values := range params {
+// 		q.Add(key, values)
+// 	}
+// 	u.RawQuery = q.Encode()
+// 	return u.String()
+
+// }
+
+// requestHeaders 请求头
 func requestHeaders() map[string]string {
 	return nil
 }
 
+// doRequest 发起请求
 func doRequest(url string) ([]byte, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
@@ -49,7 +78,6 @@ func doRequest(url string) ([]byte, error) {
 		log.Println("new get request error:", err)
 		return nil, err
 	}
-	log.Printf("URL: %s\n", url)
 
 	if headers := requestHeaders(); headers != nil {
 		for key, value := range headers {
@@ -65,7 +93,7 @@ func doRequest(url string) ([]byte, error) {
 
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		log.Fatalln("status code is:", resp.StatusCode)
+		log.Println("status code is:", resp.StatusCode)
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -73,34 +101,25 @@ func doRequest(url string) ([]byte, error) {
 		return nil, err
 
 	}
-	// log.Println("Body: ",string(body))
 	return body, nil
 
 }
 
-func parseResText(text string) {
-	fmt.Println(text)
-	dom, err := goquery.NewDocumentFromReader(strings.NewReader(text))
-	if err != nil {
-		log.Fatal("parse text error:", err)
-	}
-	dom.Find("td>a").Each(func(i int, selection *goquery.Selection) {
-		if selection.Text() != "" {
-			fmt.Println(selection.Text())
-		}
-	})
-}
-
-type stockInfo struct {
-	// Code string
-	Record [][]string
-}
-
-// type stockInfo struct {
-// Data detail
+// func parseResText(text string) {
+// 	fmt.Println(text)
+// 	dom, err := goquery.NewDocumentFromReader(strings.NewReader(text))
+// 	if err != nil {
+// 		log.Fatal("parse text error:", err)
+// 	}
+// 	dom.Find("td>a").Each(func(i int, selection *goquery.Selection) {
+// 		if selection.Text() != "" {
+// 			fmt.Println(selection.Text())
+// 		}
+// 	})
 // }
 
-func parseResToStruct(res []byte) *stockInfo {
+// parseResToStruct 解析返回的数据，格式化数据
+func parseResData1(res []byte) *stockInfo {
 	oneStock := &stockInfo{}
 	err := json.Unmarshal(res, oneStock)
 	if err != nil {
@@ -117,41 +136,54 @@ func parseResToStruct(res []byte) *stockInfo {
 	return oneStock
 }
 
-// Dispatch 运行爬虫
-func Dispatch() {
-	// baseURL := "http://58.push2his.eastmoney.com/api/qt/stock/kline/get?secid=1.600579&ut=fa5fd1943c7b386f172d6893dbfba10b" +
-	// "&fields1=f1%2Cf2&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58&klt=101&fqt=0&end=20500101&lmt=1000000&_=1579508724957"
+// parseResData 解析数据
+func parseResData(content []byte) *resStockList {
+	var res resStockList
 
-	baseURL := "http://api.finance.ifeng.com/akdaily/"
-	params := map[string]string{
-		"code": "sz000001",
-		"type": "last",
-	}
-
-	// for i := 0; i < 50; i++ {
-	// 	url := fmt.Sprintf(baseURL, i)
-	// 	fmt.Println(url)
-	// 	time.Sleep(time.Second * 4)
-	// 	text := getHtmlTest(url)
-	// 	parseText(text)
-	// }
-	// params := make(map[string]string)
-	// params := map[string]string{
-	// 	"secid":   "1.600579",
-	// 	"ut":      "fa5fd1943c7b386f172d6893dbfba10b",
-	// 	"fields1": "f1,f2,f3,f4",
-	// 	"fields2": "f4,f67,f43",
-	// 	"klt":     "101",
-	// 	"fqt":     "0",
-	// 	"end":     "2050101",
-	// 	"lmt":     "1000000",
-	// 	"_":       "1579508724957",
-	// }
-	url := buildURL(baseURL, params)
-	resData, err := doRequest(url)
+	err := json.Unmarshal(content, &res)
 	if err != nil {
-		log.Printf("URL: %s, err: %s\n", url, err.Error())
+		log.Println("parse response error: ", err)
 	}
-	parseResToStruct(resData)
+
+	fmt.Println("len:", len(res.Data.Diff))
+	stockList := res.Data.Diff
+	for i := 0; i < len(stockList); i++ {
+		fmt.Println(stockList[i])
+	}
+	return nil
+}
+
+// crawlShStockList 爬取上证A股股票
+func crawlStockList(urlFomart string) {
+	baseURL := fmt.Sprintf(urlFomart, config.StockNumLimit)
+	res, err := doRequest(baseURL)
+	if err != nil {
+		log.Printf("url: %s, error: %s", baseURL, err)
+	}
+	parseResData(res)
+
+}
+
+func crawlOneStockInfo(stockCode string) {
+	url := fmt.Sprintf(config.StockInfoURL, stockCode)
+	response, err := doRequest(url)
+	if err != nil {
+		log.Printf("crawlOneStockInfo error: %s, url: %s", err, url)
+	}
+	parseResData(response)
+}
+
+// RunSpider 运行爬虫的入口
+func RunSpider() {
+	switch {
+	case config.IsShA:
+		crawlStockList(config.ShStockListURL)
+		fallthrough
+	case config.IsSzA:
+		crawlStockList(config.SzStockListURL)
+		fallthrough
+	case config.IsKcb:
+		crawlStockList(config.KcbStockListURL)
+	}
 
 }

@@ -1,0 +1,27 @@
+version: '2'
+services:
+  mongo:
+    image: mongo:latest
+    environment:
+        # 在这里输入 MongoDB 的 root 用户与密码，如果使用了此项，则不需要 --auth 参数
+        - MONGO_INITDB_ROOT_USERNAME=admin
+        - MONGO_INITDB_ROOT_PASSWORD=maxin123
+    ports:
+      - "27017:27017"
+    volumes:
+        # 如果想为特定的数据库创建相应的用户，可以将以下文件映射到容器中，其中创建用户的脚本文件会在下一段代码中
+      - "./db_volume:/data/db"
+    command: mongod
+  mongo-express:
+    links:
+      - mongo
+    image: mongo-express
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_OPTIONS_EDITORTHEME: 3024-night
+      ME_CONFIG_BASICAUTH_USERNAME: maxin
+      ME_CONFIG_BASICAUTH_PASSWORD: maxin123
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: maxin123

@@ -1,8 +1,6 @@
 package main
 
-import (
-	"go-spider/core"
-)
+import "sailboat/core"
 
 func main() {
 	core.Dispatch()
