@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"sailboat/config"
+	"strconv"
 )
 
 var (
@@ -19,19 +20,52 @@ var (
 		"X-Requested-With":          "XMLHttpRequest",
 		"Cookie":                    "spversion=20130314; historystock=1A0001%7C*%7C601318; Hm_lvt_78c58f01938e4d85eaf619eae71b4ed1=1577956133,1578385411; Hm_lpvt_78c58f01938e4d85eaf619eae71b4ed1=1578385411; v=At0J-6B9X2jHbjtEVwdUabo05bLT-h2yGyh1eZ-iGzJji_MkZ0ohHKt-h_Us",
 	}
+
+	stockCountMap = make(map[string]int)
+
+	stockNum int
+
+	stockShareNameChan = make(chan *stockShareName, 0)
+
+	stockShareMap = map[string]string{
+		"kcb": "sh",
+		"sh":  "sh",
+		"sz":  "sz",
+	}
 )
 
 type stockInfo struct {
 	// Code string
-	Record [][]string
+	Record [][]string `json:'record'`
 }
 
-// Spider 爬虫
-type Spider struct {
-	baseURL string
-	params  map[string]string
-	headers map[string]string
+type stockShareName struct {
+	share     string
+	stockList []resStockName
 }
+
+/*
+{
+    "record": [
+        [
+            "2020-01-22", 日期 0
+            "55.100", 开盘价   1
+            "64.950", 最高价   2
+            "53.360", 收盘价   3
+            "53.010", 最低价
+            "159637.84",  成交量
+            "36.870", 价格变动
+            "223.59", 涨跌
+            "53.360", 5日均价 8
+            "53.360", 10日均价 9
+            "53.360", 20日均价  10
+            "159,637.84", 5日均量
+            "159,637.84", 5日均量
+            "159,637.84" 5日均量
+		],
+	}
+
+*/
 
 // StockList 股票列表
 type resStockList struct {
@@ -50,20 +84,23 @@ type resStockName struct {
 	StockCode string
 }
 
-// buildURL 构造完整的url
-// func buildURL(baseURL string, params map[string]string) string {
-// 	u, err := url.Parse(baseURL)
-// 	if err != nil {
-// 		log.Printf("parse url erorr:%s", err)
-// 	}
-// 	q := u.Query()
-// 	for key, values := range params {
-// 		q.Add(key, values)
-// 	}
-// 	u.RawQuery = q.Encode()
-// 	return u.String()
+type stockDetail struct {
+	StockName   string
+	StockID     string
+	StockCode   string
+	HistoryData []*oneDayStockInfo
+}
 
-// }
+type oneDayStockInfo struct {
+	Open   float64
+	Close  float64
+	Volume float64 // 交易量
+	Ma5    float64
+	Ma10   float64
+	Ma20   float64
+	// TurnoverRate float64 // 换手率
+	Date string
+}
 
 // requestHeaders 请求头
 func requestHeaders() map[string]string {
@@ -84,11 +121,15 @@ func doRequest(url string) ([]byte, error) {
 			req.Header.Add(key, value)
 		}
 	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Println("request error:", err)
-		return nil, err
+	var resp *http.Response
+	var retry = 3
+	for resp, err = client.Do(req); retry > 0; retry-- {
+		if err != nil {
+			log.Println("request error: ", err)
+			return nil, err
+		} else {
+			retry = 0
+		}
 	}
 
 	defer resp.Body.Close()
@@ -105,85 +146,129 @@ func doRequest(url string) ([]byte, error) {
 
 }
 
-// func parseResText(text string) {
-// 	fmt.Println(text)
-// 	dom, err := goquery.NewDocumentFromReader(strings.NewReader(text))
-// 	if err != nil {
-// 		log.Fatal("parse text error:", err)
-// 	}
-// 	dom.Find("td>a").Each(func(i int, selection *goquery.Selection) {
-// 		if selection.Text() != "" {
-// 			fmt.Println(selection.Text())
-// 		}
-// 	})
-// }
-
-// parseResToStruct 解析返回的数据，格式化数据
-func parseResData1(res []byte) *stockInfo {
+// parseOneStockDateil 解析一只股票数据，格式化数据
+func parseOneStockDateil(res []byte) []*oneDayStockInfo {
 	oneStock := &stockInfo{}
 	err := json.Unmarshal(res, oneStock)
 	if err != nil {
-		log.Fatal("parse response data. error:", err)
+		log.Printf("parse response data. error:%s, data:%s", err, res)
+		return []*oneDayStockInfo{}
 	}
 
 	stockSet := oneStock.Record
-	fmt.Println("len:", len(stockSet))
-	for i := 0; i < 1; i++ {
-		for _, v := range stockSet[i] {
-			fmt.Println(v)
-		}
+	stockResultSet := make([]*oneDayStockInfo, 0, len(stockSet))
+	log.Println("len:", len(stockSet))
+	for i := 0; i < len(stockSet); i++ {
+		s := stockSet[i]
+		stock := new(oneDayStockInfo)
+		stock.Date = s[0]
+		stock.Open, _ = strconv.ParseFloat(s[1], 64)
+		stock.Close, _ = strconv.ParseFloat(s[3], 64)
+		stock.Volume, _ = strconv.ParseFloat(s[5], 64)
+		stock.Ma5, _ = strconv.ParseFloat(s[8], 64)
+		stock.Ma10, _ = strconv.ParseFloat(s[9], 64)
+		stock.Ma20, _ = strconv.ParseFloat(s[10], 64)
+
+		stockResultSet = append(stockResultSet, stock)
 	}
-	return oneStock
+	return stockResultSet
 }
 
 // parseResData 解析数据
-func parseResData(content []byte) *resStockList {
+func parseStockListResData(content []byte, share string) []resStockName {
 	var res resStockList
-
-	err := json.Unmarshal(content, &res)
-	if err != nil {
-		log.Println("parse response error: ", err)
+	// log.Println(string(content))
+	if err := json.Unmarshal(content, &res); err != nil {
+		log.Printf("parseStockListResData share: %s, error: %s\n", share, err)
 	}
-
-	fmt.Println("len:", len(res.Data.Diff))
+	stockCountMap[share] = res.Data.Total
 	stockList := res.Data.Diff
-	for i := 0; i < len(stockList); i++ {
-		fmt.Println(stockList[i])
+	codePrefix := stockShareMap[share]
+	for i := 0; i < res.Data.Total; i++ {
+		stockList[i].StockCode = codePrefix + stockList[i].StockID
 	}
-	return nil
+	return stockList
 }
 
-// crawlShStockList 爬取上证A股股票
-func crawlStockList(urlFomart string) {
+// crawlStockList 爬取股票列表
+func crawlStockList(urlFomart string, share string) {
 	baseURL := fmt.Sprintf(urlFomart, config.StockNumLimit)
 	res, err := doRequest(baseURL)
 	if err != nil {
 		log.Printf("url: %s, error: %s", baseURL, err)
 	}
-	parseResData(res)
-
+	sShareName := stockShareName{
+		stockList: parseStockListResData(res, share),
+		share:     share,
+	}
+	log.Println("crawl stock ok share: ", share)
+	stockShareNameChan <- &sShareName
 }
 
-func crawlOneStockInfo(stockCode string) {
+func processListen(taskChan chan *task) {
+	go func() {
+		log.Println("processListen start...")
+		num := 0
+		for v := range stockShareNameChan {
+
+			go func(sSN *stockShareName) {
+				stockList := sSN.stockList
+				share := sSN.share
+				log.Printf("deal stockShare: %s, stockCount: %d\n", share, len(stockList))
+				for idx := range stockList {
+					sDetail := &stockDetail{
+						StockCode: stockList[idx].StockCode,
+						StockName: stockList[idx].StockName,
+						StockID:   stockList[idx].StockID,
+					}
+
+					t := newTask(
+						crawlOneStock,
+						share,
+						stockList[idx].StockCode,
+						sDetail)
+
+					p.entryChannel <- t
+				}
+			}(v)
+			if num++; num == stockNum {
+				close(stockShareNameChan)
+			}
+		}
+
+	}()
+}
+
+func crawlOneStock(stockCode string) []*oneDayStockInfo {
 	url := fmt.Sprintf(config.StockInfoURL, stockCode)
 	response, err := doRequest(url)
 	if err != nil {
 		log.Printf("crawlOneStockInfo error: %s, url: %s", err, url)
 	}
-	parseResData(response)
+	stockHistoryData := parseOneStockDateil(response)
+	return stockHistoryData
+
 }
 
 // RunSpider 运行爬虫的入口
 func RunSpider() {
+
+	initScheduler()
+	processListen(p.entryChannel)
+
 	switch {
 	case config.IsShA:
-		crawlStockList(config.ShStockListURL)
+		go crawlStockList(config.ShStockListURL, config.ShA)
+		stockNum++
 		fallthrough
 	case config.IsSzA:
-		crawlStockList(config.SzStockListURL)
+		go crawlStockList(config.SzStockListURL, config.SzA)
+		stockNum++
 		fallthrough
 	case config.IsKcb:
-		crawlStockList(config.KcbStockListURL)
+		go crawlStockList(config.KcbStockListURL, config.Kcb)
+		stockNum++
+
 	}
 
 }

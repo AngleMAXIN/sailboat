@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestInitDB(t *testing.T) {
+func Test_initDB(t *testing.T) {
 	tests := []struct {
 		name string
 		give database
@@ -23,7 +23,7 @@ func TestInitDB(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := InitDB(tt.give.poolSize, tt.give.connURI, tt.give.dbName); got != tt.want {
+			if got := initDB(tt.give.poolSize, tt.give.connURI, tt.give.dbName); got != tt.want {
 				t.Errorf("InitDB() = %v, want %v", got, tt.want)
 			}
 		})
@@ -31,7 +31,7 @@ func TestInitDB(t *testing.T) {
 
 }
 
-func TestInsertOne(t *testing.T) {
+func Test_insertOne(t *testing.T) {
 	// database{
 	poolSize := uint64(30)
 	connURI := "mongodb://admin:maxin123@localhost:27017"
@@ -41,7 +41,7 @@ func TestInsertOne(t *testing.T) {
 		Name string
 		Age  int
 	}
-	InitDB(poolSize, connURI, dbName)
+	initDB(poolSize, connURI, dbName)
 	tests := []struct {
 		name string
 		give interface{}
@@ -55,7 +55,7 @@ func TestInsertOne(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := DB.InsertOne("test_insert", tt.give); got != tt.want {
+			if got := DB.insertOne("test_insert", tt.give); got != tt.want {
 				t.Errorf("DB.InsertOne() = %v, want %v", got, tt.want)
 			}
 		})

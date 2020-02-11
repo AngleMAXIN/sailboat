@@ -2,6 +2,8 @@ package core
 
 import (
 	"context"
+	"log"
+	"sailboat/config"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -9,7 +11,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
+// DB 数据库实例
 var DB *database
+var szStockResultChan = make(chan *stockDetail, 2)
+var shStockResultChan = make(chan *stockDetail, 2)
+var kcbStockResultChan = make(chan *stockDetail, 2)
 
 type database struct {
 	client *mongo.Client
@@ -19,11 +25,8 @@ type database struct {
 	connURI  string
 }
 
-//初始化
-func InitDB(poolSize uint64, connURI string, dbName string) error {
-	// poolSize := uint64(30)
-	// connURI := "mongodb://admin:maxin123@localhost:27017"
-	// dbName := "sailboat_db"
+// InitDB 初始化
+func initDB(poolSize uint64, connURI string, dbName string) error {
 	db := &database{
 		// client:,
 		dbName:   dbName,
@@ -36,6 +39,7 @@ func InitDB(poolSize uint64, connURI string, dbName string) error {
 	}
 	db.client = client
 	DB = db
+	log.Println("connected db succesful.")
 	return err
 }
 
@@ -57,14 +61,60 @@ func (db *database) setConnect() (*mongo.Client, error) {
 	return client, err
 }
 
-// //插入单个
-func (db *database) InsertOne(collection string, value interface{}) error {
+// InsertOne 插入单个
+func (db *database) insertOne(collection string, value interface{}) error {
 	c := db.client.Database(db.dbName).Collection(collection)
 	_, err := c.InsertOne(context.TODO(), value)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+// InsertMany 批量插入
+func (db *database) insertMany(collection string, value []interface{}) error {
+	c := db.client.Database(db.dbName).Collection(collection)
+	_, err := c.InsertMany(context.TODO(), value)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// StoreDataEvent 存储事件监听
+func StoreDataEvent() {
+	pSize := config.DBPoolSize
+	dbConnURI := config.DBconnURI
+	dbName := config.DBName
+
+	initDB(pSize, dbConnURI, dbName)
+
+	var (
+		szStockInsertNum  uint
+		shStockInsertNum  uint
+		kcbStockInsertNum uint
+	)
+	go func() {
+		log.Println("StoreDataEvent start...")
+		for {
+			select {
+			case v := <-szStockResultChan:
+				DB.insertOne("sz_stock", *v)
+				szStockInsertNum++
+				log.Printf("stock share: sz, number:%d\n", szStockInsertNum)
+			case v := <-shStockResultChan:
+				DB.insertOne("sh_stock", *v)
+				shStockInsertNum++
+				log.Printf("stock share: sh, number:%d\n", shStockInsertNum)
+			case v := <-kcbStockResultChan:
+				DB.insertOne("kcb_stock", *v)
+				kcbStockInsertNum++
+				log.Printf("stock share: kcb, number:%d\n", kcbStockInsertNum)
+
+			}
+		}
+
+	}()
 }
 
 // func NewMgo(database, collection string) *mgo {
@@ -140,7 +190,7 @@ func (db *database) InsertOne(collection string, value interface{}) error {
 // 	}
 // 	return count.DeletedCount
 
-// }
+// } 'Liberation Mono'
 
 // //删除多个
 // func (m *mgo) DeleteMany(key string, value interface{}) int64 {

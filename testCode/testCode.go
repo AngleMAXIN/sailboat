@@ -1,15 +1,27 @@
 package main
 
-import "net/url"
+import (
+	"fmt"
+	"time"
+)
 
-import "fmt"
+var testChan chan int
 
 func main() {
-	baseURL := "http://api.finance.ifeng.com/akdaily/"
-	u, _ := url.Parse(baseURL)
-	fmt.Println(u.RequestURI(), u.Query())
-	q := u.Query()
-	q.Add("code", "sdsds")
-	u.RawQuery = q.Encode()
-	fmt.Println(u.Query(), u.String())
+	testChan = make(chan int, 9)
+	fmt.Printf("1 len:%d,cap:%d\n", len(testChan), cap(testChan))
+	go func() {
+		fmt.Printf("5 len:%d,cap:%d\n", len(testChan), cap(testChan))
+		for v := range testChan {
+			fmt.Println("recive: ", v)
+			fmt.Printf("2 len:%d,cap:%d\n", len(testChan), cap(testChan))
+
+		}
+	}()
+	testChan <- 9
+	fmt.Printf("3 len:%d,cap:%d\n", len(testChan), cap(testChan))
+
+	time.Sleep(time.Microsecond * 200)
+	fmt.Printf("4 len:%d,cap:%d\n", len(testChan), cap(testChan))
+
 }

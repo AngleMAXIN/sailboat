@@ -12,16 +12,16 @@ services:
         # 如果想为特定的数据库创建相应的用户，可以将以下文件映射到容器中，其中创建用户的脚本文件会在下一段代码中
       - "./db_volume:/data/db"
     command: mongod
-  mongo-express:
-    links:
-      - mongo
-    image: mongo-express
-    restart: always
-    ports:
-      - 8081:8081
-    environment:
-      ME_CONFIG_OPTIONS_EDITORTHEME: 3024-night
-      ME_CONFIG_BASICAUTH_USERNAME: maxin
-      ME_CONFIG_BASICAUTH_PASSWORD: maxin123
-      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
-      ME_CONFIG_MONGODB_ADMINPASSWORD: maxin123
+  # mongo-express:
+  #   links:
+  #     - mongo
+  #   image: mongo-express
+  #   restart: always
+  #   ports:
+  #     - 8081:8081
+  #   environment:
+  #     ME_CONFIG_OPTIONS_EDITORTHEME: 3024-night
+  #     ME_CONFIG_BASICAUTH_USERNAME: maxin
+  #     ME_CONFIG_BASICAUTH_PASSWORD: maxin123
+  #     ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+  #     ME_CONFIG_MONGODB_ADMINPASSWORD: maxin123
