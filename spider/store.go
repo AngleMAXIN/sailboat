@@ -94,27 +94,27 @@ func StoreDataEvent() {
 		shStockInsertNum  uint
 		kcbStockInsertNum uint
 	)
-	go func() {
-		log.Println("StoreDataEvent start...")
-		for {
-			select {
-			case v := <-szStockResultChan:
-				DB.insertOne("sz_stock", *v)
-				szStockInsertNum++
-				log.Printf("stock share: sz, number:%d\n", szStockInsertNum)
-			case v := <-shStockResultChan:
-				DB.insertOne("sh_stock", *v)
-				shStockInsertNum++
-				log.Printf("stock share: sh, number:%d\n", shStockInsertNum)
-			case v := <-kcbStockResultChan:
-				DB.insertOne("kcb_stock", *v)
-				kcbStockInsertNum++
-				log.Printf("stock share: kcb, number:%d\n", kcbStockInsertNum)
+	// go func() {
+	log.Println("StoreDataEvent start...")
+	for {
+		select {
+		case v := <-szStockResultChan:
+			DB.insertOne("sz_stock", *v)
+			szStockInsertNum++
+			log.Printf("stock share: sz, number:%d\n", szStockInsertNum)
+		case v := <-shStockResultChan:
+			DB.insertOne("sh_stock", *v)
+			shStockInsertNum++
+			log.Printf("stock share: sh, number:%d\n", shStockInsertNum)
+		case v := <-kcbStockResultChan:
+			DB.insertOne("kcb_stock", *v)
+			kcbStockInsertNum++
+			log.Printf("stock share: kcb, number:%d\n", kcbStockInsertNum)
 
-			}
 		}
+	}
 
-	}()
+	// }()
 }
 
 // func NewMgo(database, collection string) *mgo {

@@ -1,12 +1,13 @@
 package main
 
 import (
-	"sailboat/core"
+	"sailboat/spider"
 	"time"
 )
 
 func main() {
-	core.StoreDataEvent()
-	core.RunSpider()
-	time.Sleep(time.Second*2000)
+	spider.RunSpider()
+	spider.StoreDataEvent()
+
+	time.Sleep(time.Second * 2000)
 }

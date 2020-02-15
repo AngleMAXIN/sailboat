@@ -126,7 +126,6 @@ func doRequest(url string) ([]byte, error) {
 	for resp, err = client.Do(req); retry > 0; retry-- {
 		if err != nil {
 			log.Println("request error: ", err)
-			return nil, err
 		} else {
 			retry = 0
 		}
