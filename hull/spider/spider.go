@@ -1,13 +1,15 @@
-package core
+package spider
 
 import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"sailboat/config"
 	"strconv"
+	"time"
 )
 
 var (
@@ -32,11 +34,13 @@ var (
 		"sh":  "sh",
 		"sz":  "sz",
 	}
+
+	// t = time.NewTicker(1000 * time.Millisecond)
 )
 
 type stockInfo struct {
 	// Code string
-	Record [][]string `json:'record'`
+	Record [][]string `json:"record"`
 }
 
 type stockShareName struct {
@@ -102,6 +106,10 @@ type oneDayStockInfo struct {
 	Date string
 }
 
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
+
 // requestHeaders 请求头
 func requestHeaders() map[string]string {
 	return nil
@@ -109,6 +117,9 @@ func requestHeaders() map[string]string {
 
 // doRequest 发起请求
 func doRequest(url string) ([]byte, error) {
+	sleepTime := rand.Intn(3000)
+	time.Sleep(time.Microsecond * time.Duration(sleepTime))
+
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -156,7 +167,6 @@ func parseOneStockDateil(res []byte) []*oneDayStockInfo {
 
 	stockSet := oneStock.Record
 	stockResultSet := make([]*oneDayStockInfo, 0, len(stockSet))
-	log.Println("len:", len(stockSet))
 	for i := 0; i < len(stockSet); i++ {
 		s := stockSet[i]
 		stock := new(oneDayStockInfo)
@@ -176,11 +186,12 @@ func parseOneStockDateil(res []byte) []*oneDayStockInfo {
 // parseResData 解析数据
 func parseStockListResData(content []byte, share string) []resStockName {
 	var res resStockList
-	// log.Println(string(content))
 	if err := json.Unmarshal(content, &res); err != nil {
 		log.Printf("parseStockListResData share: %s, error: %s\n", share, err)
 	}
-	stockCountMap[share] = res.Data.Total
+
+	log.Println("stock type: %s, total: %d\n", share, res.Data.Total)
+
 	stockList := res.Data.Diff
 	codePrefix := stockShareMap[share]
 	for i := 0; i < res.Data.Total; i++ {
@@ -200,11 +211,10 @@ func crawlStockList(urlFomart string, share string) {
 		stockList: parseStockListResData(res, share),
 		share:     share,
 	}
-	log.Println("crawl stock ok share: ", share)
 	stockShareNameChan <- &sShareName
 }
 
-func processListen(taskChan chan *task) {
+func processListen() {
 	go func() {
 		log.Println("processListen start...")
 		num := 0
@@ -213,7 +223,6 @@ func processListen(taskChan chan *task) {
 			go func(sSN *stockShareName) {
 				stockList := sSN.stockList
 				share := sSN.share
-				log.Printf("deal stockShare: %s, stockCount: %d\n", share, len(stockList))
 				for idx := range stockList {
 					sDetail := &stockDetail{
 						StockCode: stockList[idx].StockCode,
@@ -232,6 +241,7 @@ func processListen(taskChan chan *task) {
 			}(v)
 			if num++; num == stockNum {
 				close(stockShareNameChan)
+				log.Println("stockShareNameChan Chan is close")
 			}
 		}
 
@@ -253,21 +263,21 @@ func crawlOneStock(stockCode string) []*oneDayStockInfo {
 func RunSpider() {
 
 	initScheduler()
-	processListen(p.entryChannel)
+	processListen()
 
-	switch {
-	case config.IsShA:
+	if config.IsShA {
 		go crawlStockList(config.ShStockListURL, config.ShA)
 		stockNum++
-		fallthrough
-	case config.IsSzA:
+	}
+
+	if config.IsSzA {
 		go crawlStockList(config.SzStockListURL, config.SzA)
 		stockNum++
-		fallthrough
-	case config.IsKcb:
+	}
+
+	if config.IsKcb {
 		go crawlStockList(config.KcbStockListURL, config.Kcb)
 		stockNum++
-
 	}
 
 }
