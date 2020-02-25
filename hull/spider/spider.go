@@ -7,7 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"sailboat/config"
+	"hull/config"
 	"strconv"
 	"time"
 )

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"sailboat/spider"
+	"hull/spider"
 )
 
 func main() {

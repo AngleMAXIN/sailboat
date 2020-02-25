@@ -2,7 +2,7 @@ package spider
 
 import (
 	"log"
-	"sailboat/config"
+	"hull/config"
 )
 
 var p *pool

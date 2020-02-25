@@ -1,4 +1,4 @@
-module sailboat
+module hull
 
 go 1.13
 

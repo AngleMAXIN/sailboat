@@ -3,7 +3,7 @@ package spider
 import (
 	"context"
 	"log"
-	"sailboat/config"
+	"hull/config"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"

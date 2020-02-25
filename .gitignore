@@ -2,3 +2,8 @@
 .vscode
 testCode/
 db_volume/
+venv/
+QuantStudy-master
+zxg.dat
+
+*.csv
