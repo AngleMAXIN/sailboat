@@ -1,5 +1,5 @@
 import pandas as pd
-
+import  numpy as np
 from sail.util import get_macd
 from sail.water import StockHistoryDataNet
 
@@ -9,8 +9,8 @@ def macd_rule():
     source = StockHistoryDataNet(stock_codes)
     source_data = source.get_all_history(stock_codes[0])
     df = pd.DataFrame(data=source_data)
-    close = df.close.values
-    DIF, DEA, _MACD = get_macd(close)
+    df.close = df.close.astype(np.float)
+    DIF, DEA, _MACD = get_macd(df.close.values)
 
     value_dict = {
         "MACD": _MACD,
@@ -25,3 +25,5 @@ def macd_rule():
     df.to_csv("/home/maxin/result.csv")
 
 
+if __name__ == '__main__':
+    macd_rule()
