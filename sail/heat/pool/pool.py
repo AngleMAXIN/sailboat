@@ -1,11 +1,11 @@
 import datetime
-
 import pandas as pd
 
 from sail.constant import StorePath
 from sail.water import StockDataSourceNet
 
-__all__ = ('StockPool')
+__all__ = ['StockPool']
+
 
 class StockPool:
     def __init__(self, pool_limit=0, is_storage=True, path=StorePath):
@@ -22,7 +22,7 @@ class StockPool:
         self.pe_top = 0, 0
 
     def set_pe_rules(self, top, level):
-        self.pe = "pe"
+        self.pe = "stock_pe"
         self.pe_level = level
         self.pe_top = top
 
@@ -48,8 +48,14 @@ class StockPool:
         csv_path = "{}/{}.csv".format(self.store_path, datetime.date.today().isoformat())
         self.pool_stock.to_csv(csv_path)
 
-    # def to_list(self):
-    #     if not self.pool_stock:
-    #         return
-    #     return self.pool_stock.to_list()
+    def to_stock_code_list(self):
+        stock_code = self.pool_stock['stock_code'].to_numpy()
+        return stock_code.tolist(), stock_code.size
 
+
+if __name__ == '__main__':
+    s = StockPool()
+    s.set_pe_rules(top=14.0, level=0.0)
+    r = s.get_pool()
+
+    print(s.to_stock_code_list())

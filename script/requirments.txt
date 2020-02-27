@@ -6,3 +6,6 @@ pandas==1.0.1
 requests==2.22.0
 tushare==1.2.50
 TA-Lib==0.4.17
+pymongo==3.10.1 
+msgpack-python==0.5.6 
+redis==3.4.1

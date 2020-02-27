@@ -1,9 +1,13 @@
-.idea
-.vscode
+.idea/
+.vscode/
 testCode/
 db_volume/
 venv/
-QuantStudy-master
-zxg.dat
+__pychae__
 
+QuantStudy-master/
+
+zxg.dat
 *.csv
+celerybeat-schedule
+celerybeat.pid

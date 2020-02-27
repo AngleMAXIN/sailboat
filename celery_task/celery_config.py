@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from celery.schedules import crontab
 
 
 BROKER_URL = 'redis://localhost' # 使用Redis作为消息代理
@@ -12,3 +13,14 @@ CELERY_RESULT_SERIALIZER = 'json' # 读取任务结果一般性能要求不高�
 CELERY_TASK_RESULT_EXPIRES = 60 * 60 * 24 # 任务过期时间
 
 CELERY_ACCEPT_CONTENT = ['json', 'msgpack'] # 指定接受的内容类型
+CELERY_IMPORTS = {
+    "celery_task.tasks",
+}
+
+CELERYBEAT_SCHEDULE = {
+    "stock_pool_update":{
+        "task":"celery_task.tasks.stock_pool_update",
+        "schedule":crontab(minute=0, hour=0),
+    },
+
+}
