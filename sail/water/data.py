@@ -2,7 +2,6 @@ from sail.constant.constant import (KcbStockListURL, ShStockListURL,
                                     StockHisDataURL, SzStockListURL)
 from sail.util import Spider, logger
 
-__all__ = ['StockDataSourceNet','StockHistoryDataNet']
 
 class StockDataSourceNet:
     """
@@ -79,20 +78,25 @@ class StockHistoryDataNet:
         self._start_get_data()
 
     def get_all_history(self, stock_code=""):
+        """
+        Return: Map[ stock_code ][ DateFrame[ date,close ] ]
+        """
         return self.data_map.get(stock_code, self.data_map)
 
     def _start_get_data(self):
         for r_code in self.stock_codes:
             code = r_code + self.prefix_code[r_code[0]]
             url = self.url_format.format(code)
-            tuple_stock_his = tuple(self._from.get_stock_list(url))
+
+            tuple_stock_his = self._from.get_stock_list(url)
             if tuple_stock_his:
-                logger.info("get stock code {} successful".format(code))
+                logger.info("get stock code {0} successful".format(code))
             else:
-                logger.error("get stock code {} failed".format(code))
+                logger.error("get stock code {0} failed".format(code))
             self.data_map[r_code] = tuple_stock_his
 
-    
+__all__ = ['StockDataSourceNet','StockHistoryDataNet']
+
 
 if __name__ == '__main__':
     sd = StockDataSourceNet()

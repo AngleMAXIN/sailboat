@@ -8,7 +8,7 @@ class Spider:
     def __init__(self, type="all"):
         self.url = ""
         self.share = ""
-        self.type = type if not type else "one"
+        self.type = type if type else "one"
 
     def _get(self):
         r = requests.get(self.url)
@@ -45,8 +45,8 @@ class Spider:
             return
         try:
             raw_data = json.loads(res_text[1:-1])['data']
-        except json.decoder.JSONDecodeError:
-            logger.info(res_text)
+        except json.decoder.JSONDecodeError as e:
+            logger.error(e)
             return []
 
         stock_list = []
@@ -60,7 +60,7 @@ class Spider:
                     }
                 )
 
-        return stock_list
+        return tuple(stock_list)
 
     def _parse_short_data(self, res_text):
         """
@@ -77,9 +77,9 @@ if __name__ == "__main__":
     s = Spider()
     StockHisDataURL = "http://pdfm.eastmoney.com/EM_UBG_PDTI_Fast/api/js?token=4f1862fc3b5e77c150a2b985b12db0fd&rtntype=6&id=0000012&type=k"
     r = s.get_stock_list(StockHisDataURL, "")
-    print(r)
+    # print(r)
     df = pd.DataFrame(r)
-    print(df)
+    # print(df)
 
     # sd = StockDataSource()
     # r1 = sd.get_sh_stock_data()

@@ -1,7 +1,9 @@
-import datetime
-from sail.heat.pool import StockPool
+from datetime import date
+
 from sail.constant import DB_COLL_POOL
 from sail.db import db
+from sail.heat.pool import StockPool
+
 from .celery import app
 
 
@@ -16,12 +18,17 @@ def stock_pool_update():
 
     values, size = sp.to_stock_code_list()
     document = {
-        datetime.date.today().isoformat(): values,
+        "date": date.today().isoformat(),
+        "stock_set": values,
         "pool_size": size,
         "rule": "pe"
     }
 
     # insert stock code list in mongodb
-    db.insert(document,DB_COLL_POOL)
+    db.insert_stock_pool(document, DB_COLL_POOL)
     print("=====insert data successful=====")
     return "ok"
+
+
+if __name__ == "__main__":
+    stock_pool_update()

@@ -1,6 +1,4 @@
-import pandas as pd
 import talib
-import tushare as ts
 
 
 def get_macd(close_v):

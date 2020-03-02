@@ -1,4 +1,5 @@
-import datetime
+from datetime import date
+
 import pandas as pd
 
 from sail.constant import StorePath
@@ -19,7 +20,7 @@ class StockPool:
 
         self.pe = ""
         self.pe_level = 0.0
-        self.pe_top = 0, 0
+        self.pe_top = 0.0
 
     def set_pe_rules(self, top, level):
         self.pe = "stock_pe"
@@ -36,7 +37,8 @@ class StockPool:
     def get_pool(self):
         df = self._get_raw_data()
         if self.pe:
-            self.pool_stock = df[(df[self.pe] > self.pe_level) & (df[self.pe] < self.pe_top)]
+            self.pool_stock = df[(df[self.pe] > self.pe_level)
+                                 & (df[self.pe] < self.pe_top)]
         # reset index
         self.pool_stock.reset_index(drop=True, inplace=True)
 
@@ -45,7 +47,8 @@ class StockPool:
         return self.pool_stock
 
     def _to_cvs_file(self):
-        csv_path = "{}/{}.csv".format(self.store_path, datetime.date.today().isoformat())
+        csv_path = "{}/{}.csv".format(self.store_path,
+                                      date.today().isoformat())
         self.pool_stock.to_csv(csv_path)
 
     def to_stock_code_list(self):

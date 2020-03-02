@@ -11,3 +11,4 @@ zxg.dat
 *.csv
 celerybeat-schedule
 celerybeat.pid
+*.pyc
