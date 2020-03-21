@@ -2,6 +2,8 @@ from sail.constant.constant import (KcbStockListURL, ShStockListURL,
                                     StockHisDataURL, SzStockListURL)
 from sail.util import Spider, logger
 
+__all__ = ['StockDataSourceNet', 'StockHistoryDataNet']
+
 
 class StockDataSourceNet:
     """
@@ -60,7 +62,7 @@ class StockDataSourceNet:
 
 class StockHistoryDataNet:
     """
-    Data from crawl Internet, include one stock all history, data fields: data, open, close
+    Data from crawl Internet, include one stock all history, data fields: [date, open, close]
     """
 
     def __init__(self, stock_codes):
@@ -94,8 +96,6 @@ class StockHistoryDataNet:
             else:
                 logger.error("get stock code {0} failed".format(code))
             self.data_map[r_code] = tuple_stock_his
-
-__all__ = ['StockDataSourceNet','StockHistoryDataNet']
 
 
 if __name__ == '__main__':
