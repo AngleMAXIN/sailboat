@@ -31,7 +31,7 @@ const (
 	// IsSzB 是否爬取深证B股
 	IsSzB = false
 	// IsKcb 是否爬取创业板
-	IsKcb = true
+	IsKcb = false
 	// PoolSize 爬虫池 worker 数量
 	PoolSize = 4
 	// DBPoolSize 数据库连接池大小

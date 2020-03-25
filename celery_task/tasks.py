@@ -27,7 +27,7 @@ def stock_pool_update():
     # insert stock code list in mongodb
     db.insert_stock_pool(document, DB_COLL_POOL)
     print("===== get {} stock in pool =====".format(size))
-
+    return document
 
 @app.task
 def insert_date_async(doc):

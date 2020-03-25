@@ -1,41 +1,47 @@
 package main
 
 import (
-	"context"
+	"hull/pool"
+	"hull/spider"
+	"hull/storage"
 	"log"
-	"os"
 	"time"
 )
 
-var logg *log.Logger
-
-func doStuff(ctx context.Context) {
-	for {
-		time.Sleep(1 * time.Second)
-		select {
-		case <-ctx.Done():
-			logg.Printf("done")
-			return
-		default:
-			logg.Printf("work")
-		}
-	}
-}
-
-func timeoutHandler() {
-	// ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second))
-	// go doTimeOutStuff(ctx)
-	go doStuff(ctx)
-
-	time.Sleep(10 * time.Second)
-
-	cancel()
-
-}
-
 func main() {
-	logg = log.New(os.Stdout, "", log.Ltime)
-	timeoutHandler()
-	logg.Printf("end")
+	start := time.Now().Unix()
+
+	pool.InitWorkerPool()
+
+	spider.StartSpider()
+	
+	storage.Saver.StartSaveProcess()
+
+	log.Printf("======== Process finished. cost time: %d s =======", time.Now().Unix()-start)
 }
+
+/***************
+func main() {
+	var testCahn = make(chan int, 90)
+	var quit = make(chan int)
+	go func() {
+		for v := range testCahn {
+			fmt.Println("out ->", v)
+			time.Sleep(time.Microsecond * 200)
+		}
+		quit <- 1
+	}()
+
+	go func() {
+		count := 90
+		for i := 0; i < count; i++ {
+			fmt.Println("int <-", i)
+			testCahn <- i
+		}
+		close(testCahn)
+		fmt.Println("我都close 了")
+	}()
+	<-quit
+	fmt.Println("end")
+}
+***************/

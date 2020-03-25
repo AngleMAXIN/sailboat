@@ -1,3 +1,5 @@
+from gevent import monkey as curious_george
+curious_george.patch_all(thread=False, select=False)
 from pymongo import MongoClient
 from datetime import date
 from sail.constant import DBURL
@@ -63,13 +65,17 @@ class DB:
         return self._insert(filter, update, document, coll)
 
     def find_stock_pool(self, coll_name=""):
+        """
+            获取当前股票池的股票数据
+            return：
+        """
         if not coll_name:
             coll_name = self.POOL_COLL
         coll = self.db[coll_name]
 
         _filter = {"date": date.today().isoformat()}
         result_data = coll.find_one(filter=_filter)
-        return result_data.get("stock_set")
+        return result_data
 
     def find_macd_rule_stock(self, stock_code=""):
 

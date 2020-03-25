@@ -1,9 +1,10 @@
-package spider
+package storage
 
 import (
 	"context"
-	"log"
+	"hull/common"
 	"hull/config"
+	"log"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -12,58 +13,58 @@ import (
 )
 
 // DB 数据库实例
-var DB *database
-var szStockResultChan = make(chan *stockDetail, 2)
-var shStockResultChan = make(chan *stockDetail, 2)
-var kcbStockResultChan = make(chan *stockDetail, 2)
+var Saver *storage
 
-type database struct {
+// StockDetailRusultChan deal data
+var StockDetailRusultChan = make(chan *common.StockDetail, 3)
+
+type storage struct {
 	client *mongo.Client
 	dbName string
 	// collection string
 	poolSize uint64
 	connURI  string
+
+	StockDetailRusultChan chan *common.StockDetail
 }
 
 // InitDB 初始化
-func initDB(poolSize uint64, connURI string, dbName string) error {
-	db := &database{
+func init() {
+	saver := &storage{
 		// client:,
-		dbName:   dbName,
-		connURI:  connURI,
-		poolSize: poolSize,
+		dbName:                config.DBName,
+		connURI:               config.DBconnURI,
+		poolSize:              config.DBPoolSize,
+		StockDetailRusultChan: make(chan *common.StockDetail, 3),
 	}
-	client, err := db.setConnect()
+	client, err := saver.setConnect()
 	if err != nil {
-		return err
+		panic(err)
 	}
-	db.client = client
-	DB = db
+	saver.client = client
+	Saver = saver
 	log.Println("connected db succesful.")
-	return err
 }
 
 // SetConnect 连接设置
-func (db *database) setConnect() (*mongo.Client, error) {
+func (s *storage) setConnect() (*mongo.Client, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(db.connURI).SetMaxPoolSize(db.poolSize)) // 连接池
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(s.connURI).SetMaxPoolSize(s.poolSize)) // 连接池
 	if err != nil {
-		// log.Panic(err)
 		return nil, err
 	}
 	if err = client.Ping(ctx, readpref.Primary()); err != nil {
-		// log.Printf(err.Error())
 		return nil, err
 
 	}
-	// db.client = client
 	return client, err
 }
 
 // InsertOne 插入单个
-func (db *database) insertOne(collection string, value interface{}) error {
-	c := db.client.Database(db.dbName).Collection(collection)
+func (s *storage) insertOne(collection string, value interface{}) error {
+	coll := collection + "_" + time.Now().Format("2006-01-02")
+	c := s.client.Database(s.dbName).Collection(coll)
 	_, err := c.InsertOne(context.TODO(), value)
 	if err != nil {
 		return err
@@ -72,8 +73,9 @@ func (db *database) insertOne(collection string, value interface{}) error {
 }
 
 // InsertMany 批量插入
-func (db *database) insertMany(collection string, value []interface{}) error {
-	c := db.client.Database(db.dbName).Collection(collection)
+func (s *storage) insertMany(collection string, value []interface{}) error {
+	coll := collection + "_" + time.Now().Format("2006-01-02")
+	c := s.client.Database(s.dbName).Collection(coll)
 	_, err := c.InsertMany(context.TODO(), value)
 	if err != nil {
 		return err
@@ -81,36 +83,30 @@ func (db *database) insertMany(collection string, value []interface{}) error {
 	return nil
 }
 
-// StoreDataEvent 存储事件监听
-func StoreDataEvent() {
-	pSize := config.DBPoolSize
-	dbConnURI := config.DBconnURI
-	dbName := config.DBName
+// StartSaveProcess 存储事件监听
+func (s *storage) StartSaveProcess() {
 
-	initDB(pSize, dbConnURI, dbName)
-
-	var (
-		szStockInsertNum  uint
-		shStockInsertNum  uint
-		kcbStockInsertNum uint
-	)
-	// go func() {
-	log.Println("StoreDataEvent start...")
-	for {
-		select {
-		case v := <-szStockResultChan:
-			DB.insertOne("sz_stock", *v)
-			szStockInsertNum++
-		case v := <-shStockResultChan:
-			DB.insertOne("sh_stock", *v)
-			shStockInsertNum++
-		case v := <-kcbStockResultChan:
-			DB.insertOne("kcb_stock", *v)
-			kcbStockInsertNum++
-		}
+	var stockInsertNum uint
+	log.Println("saver start recevied data to save ...")
+	for result := range s.StockDetailRusultChan {
+		s.insertOne("stock_1", result)
+		stockInsertNum++
 	}
 
-	// }()
+	log.Printf("saver end save data, total: %d\n", stockInsertNum)
+}
+
+func (s *storage) ReceivedData(value *common.StockDetail) {
+	s.StockDetailRusultChan <- value
+}
+
+func (s *storage) Stop() {
+	for {
+		if number := len(s.StockDetailRusultChan); number == 0 {
+			close(s.StockDetailRusultChan)
+			return
+		}
+	}
 }
 
 // func NewMgo(database, collection string) *mgo {

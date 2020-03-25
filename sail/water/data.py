@@ -7,7 +7,8 @@ __all__ = ['StockDataSourceNet', 'StockHistoryDataNet']
 
 class StockDataSourceNet:
     """
-    Data from crawl Internet, include sh, sz, kcb stock ,data fields: stock_code, stock_name, stock_pe
+        股票池原始资源
+        Data from crawl Internet, include sh, sz, kcb stock ,data fields: stock_code, stock_name, stock_pe
     """
 
     def __init__(self):
@@ -71,6 +72,7 @@ class StockHistoryDataNet:
 
         # key: stock_code, values: Tuple
         self.data_map = {}
+        self.data_tuple = tuple()
         # stock_code prefix 0, is sz ,suffix is 2; prefix is 6, is sh, suffix is 1
         self.prefix_code = {"0": "2", "6": "1"}
 
@@ -85,18 +87,25 @@ class StockHistoryDataNet:
         """
         return self.data_map.get(stock_code, self.data_map)
 
+    def get_tuple(self):
+        return self.data_tuple
+
     def _start_get_data(self):
+        task_url = []
         for r_code in self.stock_codes:
             code = r_code + self.prefix_code[r_code[0]]
-            url = self.url_format.format(code)
+            task_url.append(self.url_format.format(code))
+            
+        self.data_tuple = self._from.get_stock_list(task_url)
+            # if tuple_stock_his:
+            #     logger.info("get stock code {0} successful".format(code))
+            # else:
+            #     logger.error("get stock code {0} failed".format(code))
+            # self.data_map[r_code] = tuple_stock_his
 
-            tuple_stock_his = self._from.get_stock_list(url)
-            if tuple_stock_his:
-                logger.info("get stock code {0} successful".format(code))
-            else:
-                logger.error("get stock code {0} failed".format(code))
-            self.data_map[r_code] = tuple_stock_his
-
+    def save_all_stock(self):
+        
+        pass
 
 if __name__ == '__main__':
     sd = StockDataSourceNet()

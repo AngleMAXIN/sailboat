@@ -1,9 +1,10 @@
-from sail.heat.rule.rule import back_test
+from sail.heat.rule.rule import BackTestRuleMacd
 # from celery_task.tasks import stock_pool_update
 
 # stock_pool_update()
-# run_pro()
-back_test()
+bm = BackTestRuleMacd()
+bm.start_back_test()
+# back_test()
 # from sail.db import db 
 # from celery_task.tasks import stock_pool_update
 
