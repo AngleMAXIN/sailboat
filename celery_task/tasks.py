@@ -30,7 +30,7 @@ def stock_pool_update():
     return document
 
 @app.task
-def insert_date_async(doc):
+def insert_chance_by_macd_async(doc):
     db.insert_stock_macd(doc)
 
 

@@ -3,9 +3,9 @@ package spider
 import (
 	"encoding/json"
 	"fmt"
-	"hull/common"
-	"hull/config"
-	"hull/pool"
+	"go-spider/common"
+	"go-spider/config"
+	"go-spider/pool"
 	"io/ioutil"
 	"log"
 	"math/rand"

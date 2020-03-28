@@ -1,9 +1,9 @@
 package main
 
 import (
-	"hull/pool"
-	"hull/spider"
-	"hull/storage"
+	"go-spider/pool"
+	"go-spider/spider"
+	"go-spider/storage"
 	"log"
 	"time"
 )

@@ -7,11 +7,11 @@ from sail.util.log import logger
 
 
 class Spider:
-    def __init__(self, type="all"):
+    def __init__(self, _type="all"):
         self.url = ""
         self.share = ""
         self.sync_size = 4
-        self.type = type if type else "one"
+        self._type = _type if _type else "one"
 
     def _get(self):
         import requests
@@ -19,7 +19,7 @@ class Spider:
         if r.status_code != 200:
             logger.info("get {0} stock error,status code:{1}".format(
                 self.share, r.status_code))
-            return None
+            return ""
         return r.text
 
     def _get_by_sync(self, url, share):
@@ -29,11 +29,11 @@ class Spider:
         while retry and not res_text:
             res_text = self._get()
             retry -= 1
-        if not res_text:
-            return []
+        return res_text
 
     def get_stock_list(self, url_args, share=""):
         str_type = isinstance(url_args, str)
+        res_text = ""
         if str_type:
             res_text = self._get_by_sync(url_args, share)
 
@@ -41,7 +41,7 @@ class Spider:
         if list_type:
             res_text = self._get_by_async(url_args)
 
-        if self.type == "all":
+        if self._type == "all":
             # crawl all stock list
             parsed_result = self._parse_short_data(res_text)
         else:
@@ -51,16 +51,19 @@ class Spider:
                              for text in res_text)
         return parsed_result
 
-    def exception_handler(self, r, exception):
-        print(r, exception)
+    
 
     def _get_by_async(self, urls):
         """
             异步爬取数据
         """
+
+        def _exception_handler(self, r, exception):
+            print(r, exception)
+
         rs = (grequests.get(url) for url in urls)
         result = (res.text for res in grequests.map(
-            rs, size=self.sync_size, exception_handler=self.exception_handler))
+            rs, size=self.sync_size, exception_handler=_exception_handler))
         return result
 
     def _parse_long_data(self, res_text):
@@ -92,7 +95,7 @@ class Spider:
 
         return code, tuple(stock_list)
 
-    def _parse_short_data(self, res_text):
+    def _parse_short_data(self, res_text=""):
         """
             parse stock list history data
             return : List[List]

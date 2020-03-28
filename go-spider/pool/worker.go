@@ -2,9 +2,9 @@ package pool
 
 import (
 	"fmt"
-	"hull/common"
-	"hull/config"
-	"hull/storage"
+	"go-spider/common"
+	"go-spider/config"
+	"go-spider/storage"
 	"log"
 	"sync"
 	"sync/atomic"

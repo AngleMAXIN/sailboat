@@ -2,8 +2,8 @@ package storage
 
 import (
 	"context"
-	"hull/common"
-	"hull/config"
+	"go-spider/common"
+	"go-spider/config"
 	"log"
 	"time"
 
@@ -63,8 +63,8 @@ func (s *storage) setConnect() (*mongo.Client, error) {
 
 // InsertOne 插入单个
 func (s *storage) insertOne(collection string, value interface{}) error {
-	coll := collection + "_" + time.Now().Format("2006-01-02")
-	c := s.client.Database(s.dbName).Collection(coll)
+	// collection := collection + "_" + time.Now().Format("2006-01-02")
+	c := s.client.Database(s.dbName).Collection(collection)
 	_, err := c.InsertOne(context.TODO(), value)
 	if err != nil {
 		return err
@@ -74,8 +74,8 @@ func (s *storage) insertOne(collection string, value interface{}) error {
 
 // InsertMany 批量插入
 func (s *storage) insertMany(collection string, value []interface{}) error {
-	coll := collection + "_" + time.Now().Format("2006-01-02")
-	c := s.client.Database(s.dbName).Collection(coll)
+	// collection = collection + "_" + time.Now().Format("2006-01-02")
+	c := s.client.Database(s.dbName).Collection(collection)
 	_, err := c.InsertMany(context.TODO(), value)
 	if err != nil {
 		return err
@@ -89,7 +89,7 @@ func (s *storage) StartSaveProcess() {
 	var stockInsertNum uint
 	log.Println("saver start recevied data to save ...")
 	for result := range s.StockDetailRusultChan {
-		s.insertOne("stock_1", result)
+		s.insertOne("stock", result)
 		stockInsertNum++
 	}
 

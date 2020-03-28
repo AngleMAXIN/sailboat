@@ -1,4 +1,4 @@
-module hull
+module go-spider
 
 go 1.13
 

@@ -1,14 +1,18 @@
+from datetime import date
+
 from gevent import monkey as curious_george
 curious_george.patch_all(thread=False, select=False)
-from pymongo import MongoClient
-from datetime import date
+
+from pymongo import MongoClient, DESCENDING
+
 from sail.constant import DBURL
+
 
 __all__ = ['db']
 
 
 class DB:
-
+    STOCK_RAW_COLL = "stock"
     POOL_COLL = "pool_his"
     STOCK_MACD_COLL = "stock_macd_his"
 
@@ -28,16 +32,16 @@ class DB:
         }
         """
         coll = coll_name if coll_name else self.POOL_COLL
-        filter = {"date": document['date']}
+        _filter = {"date": document['date']}
         update = {"$set": {"stock_set": document['stock_set']}}
 
-        return self._insert(filter, update, document, coll)
+        return self._insert(_filter, update, document, coll)
 
-    def _insert(self, filter, update, document, coll_name):
+    def _insert(self, _filter, update, document, coll_name):
 
         coll = self.db[coll_name]
         # if document exist, update data
-        res = coll.find_one_and_update(filter, update)
+        res = coll.find_one_and_update(_filter, update)
         if not res:
             coll.insert_one(document)
         return "ok"
@@ -58,15 +62,15 @@ class DB:
             self.db[coll].drop()
             self.is_clean = True
 
-        filter = {"date": document['date'],
+        _filter = {"date": document['date'],
                   "stock_code": document['stock_code']}
         update = {"$set": {"macd_set": document['macd_set']}}
 
-        return self._insert(filter, update, document, coll)
+        return self._insert(_filter, update, document, coll)
 
-    def find_stock_pool(self, coll_name=""):
+    def get_stock_pool(self, coll_name=""):
         """
-            获取当前股票池的股票数据
+            获取当前最新股票池的股票数据
             return：
         """
         if not coll_name:
@@ -74,19 +78,35 @@ class DB:
         coll = self.db[coll_name]
 
         _filter = {"date": date.today().isoformat()}
-        result_data = coll.find_one(filter=_filter)
+        result_data = coll.find().sort("_id", DESCENDING).limit(1)[0]
         return result_data
 
-    def find_macd_rule_stock(self, stock_code=""):
+    def get_macd_of_stock(self, stock_codes=None):
 
         coll = self.db[self.STOCK_MACD_COLL]
-        if not stock_code:
-            result_data = coll.find()
+        if len(stock_codes) < 2:
+            _filter = {"stock_code": stock_codes}
         else:
-            _filter = {"stock_code": stock_code}
-            result_data = coll.find_one(filter=_filter)
+            _filter = {"stock_code": {"$in":stock_codes}}
+        result_data = coll.find(_filter)
         return result_data
 
+    def get_all_stock(self,stock_codes=None):
+        coll = self.db[self.STOCK_RAW_COLL]
+        if not stock_codes:
+            list_result = coll.find()
+        else:
+            _filter = {"stockid":{"$in":stock_codes}}
+            list_result = coll.find(_filter)
+        return list_result
+
+    def get_one_stock(self, stock_code=""):
+        if not stock_code:
+            return dict()
+        coll = self.db[self.STOCK_RAW_COLL]
+        _filter = {"stockid":stock_code}
+        one_result = coll.find_one(filter=_filter)
+        return  one_result
 
 url = DBURL
 db = DB(url)

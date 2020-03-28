@@ -1,8 +1,12 @@
+import pandas as pd
+
 from sail.constant.constant import (KcbStockListURL, ShStockListURL,
                                     StockHisDataURL, SzStockListURL)
+from sail.db import db
 from sail.util import Spider, logger
 
-__all__ = ['StockDataSourceNet', 'StockHistoryDataNet']
+__all__ = ['StockDataSourceNet',
+           'StockDataSourceInternet', 'StockDataSourceDB']
 
 
 class StockDataSourceNet:
@@ -13,7 +17,7 @@ class StockDataSourceNet:
 
     def __init__(self):
         self.type = "all"
-        self._from = Spider(self.type)
+        self.internet_source = Spider(self.type)
 
         self._sh = "sh"
         self._sz = "sz"
@@ -27,46 +31,46 @@ class StockDataSourceNet:
         self._sz_stock_list = []
         self._kcb_stock_list = []
 
-    def get_sh_stock_data(self):
-        self._sh_stock_list = self._from.get_stock_list(
+    def _get_sh_stock_data(self):
+        self._sh_stock_list = self.internet_source.get_stock_list(
             self._sh_stock_api, self._sh)
         return self._sh_stock_list
 
-    def get_sz_stock_data(self):
-        self._sz_stock_list = self._from.get_stock_list(
+    def _get_sz_stock_data(self):
+        self._sz_stock_list = self.internet_source.get_stock_list(
             self._sz_stock_api, self._sh)
         return self._sz_stock_list
 
     def get_kcb_stock_data(self):
-        self._kcb_stock_list = self._from.get_stock_list(
+        self._kcb_stock_list = self.internet_source.get_stock_list(
             self._kcb_stock_api, self._sh)
-        return self._from.get_stock_list(self._kcb_stock_api, self._kcb)
+        return self.internet_source.get_stock_list(self._kcb_stock_api, self._kcb)
 
     def get_all_stock_data(self, kcb=False):
-        if not self._sz_stock_list:
-            self._sz_stock_list = self.get_sz_stock_data()
+        # if not self._sz_stock_list:
+        self._sz_stock_list = self._get_sz_stock_data()
 
-        if not self._sh_stock_list:
-            self._sh_stock_list = self.get_sh_stock_data()
+        # if not self._sh_stock_list:
+        self._sh_stock_list = self._get_sh_stock_data()
 
         all_stock = []
         if kcb:
             if not self._kcb_stock_list:
                 self._kcb_stock_list = self.get_kcb_stock_data()
 
-        all_stock.extend(self._kcb_stock_list)
+        all_stock.extend(self._sz_stock_list)
         all_stock.extend(self._sh_stock_list)
         all_stock.extend(self._kcb_stock_list)
 
         return tuple(all_stock)
 
 
-class StockHistoryDataNet:
+class StockDataSourceInternet:
     """
     Data from crawl Internet, include one stock all history, data fields: [date, open, close]
     """
 
-    def __init__(self, stock_codes):
+    def __init__(self, ):
         self.type = "one"
         self._from = Spider(self.type)
 
@@ -77,9 +81,6 @@ class StockHistoryDataNet:
         self.prefix_code = {"0": "2", "6": "1"}
 
         self.url_format = StockHisDataURL
-        self.stock_codes = stock_codes if stock_codes else []
-
-        self._start_get_data()
 
     def get_all_history(self, stock_code=""):
         """
@@ -87,25 +88,120 @@ class StockHistoryDataNet:
         """
         return self.data_map.get(stock_code, self.data_map)
 
-    def get_tuple(self):
-        return self.data_tuple
-
-    def _start_get_data(self):
+    def _start_get_data(self, stock_codes):
         task_url = []
-        for r_code in self.stock_codes:
+        for r_code in stock_codes:
             code = r_code + self.prefix_code[r_code[0]]
             task_url.append(self.url_format.format(code))
-            
-        self.data_tuple = self._from.get_stock_list(task_url)
-            # if tuple_stock_his:
-            #     logger.info("get stock code {0} successful".format(code))
-            # else:
-            #     logger.error("get stock code {0} failed".format(code))
-            # self.data_map[r_code] = tuple_stock_his
 
-    def save_all_stock(self):
-        
-        pass
+        self.data_tuple = self._from.get_stock_list(task_url)
+
+    def get_batch_stock_close(self, stock_codes=None):
+        self._start_get_data(stock_codes)
+        return self.data_tuple
+
+
+class StockDataSourceDB:
+    """
+    Return data source from local storage
+    Type: DataFrame 
+    Include:1> raw data of close price
+            2> include ma5, ma10 ,ma20
+
+    """
+
+    def __init__(self):
+        self.db_source = db
+        self.close_exclude = ['open', 'volume', 'ma5', 'ma10', 'ma20', ]
+        self.ma_exclude = ["open", "volume", ]
+
+        self.close_type = 2
+        self.ma_type = 1
+
+    def _generate_df(self, one, _type=2):
+        code = one.get("stockid")
+        list_history = one.get("historydata")
+
+        df = pd.DataFrame(list_history)
+        try:
+            df.set_index(['date'], inplace=True)
+        except KeyError:
+            return code, None
+
+        if _type == self.ma_type:
+            lebels = self.ma_exclude
+        elif _type == self.close_type:
+            lebels = self.close_exclude
+
+        df = df.drop(lebels, axis=1)
+        # print(df.columns)
+        return code, df
+
+    def get_one_stock_ma(self, stock_code=""):
+        '''
+
+        返回一只股票的均线值，包括5日，10日，20日均线
+        ～～～～～～～～～～～～～～～
+        Type: DataFrame
+        Include: date, ma5, ma10, ma20
+        '''
+        if not stock_code:
+            return
+        one = self.db_source.get_one_stock(stock_code=stock_code)
+        _, df = self._generate_df(one, self.ma_type)
+        return df
+
+    def get_one_stock_close(self, stock_code=""):
+        '''
+        返回一只股票的历史收盘价数据
+        ～～～～～～～～～～～～～～～
+        Type: DataFrame
+        Include: date, close
+        '''
+        if not stock_code:
+            return
+        one = self.db_source.get_one_stock(stock_code=stock_code)
+        if not one:
+            return
+        _, df = self._generate_df(one, self.close_type)
+        return df
+
+    def get_batch_stock_close(self, stock_codes=None):
+        '''
+        批量返回一批股票的历史收盘价
+        ～～～～～～～～～～～～～～～
+        Type: Tuple(Tuple(string, DataFrame))
+        Include: code, df
+        '''
+        result_set = self.db_source.get_all_stock(stock_codes)
+
+        if not result_set:
+            return
+        generate_result = (self._generate_df(one, 2) for one in result_set)
+        return generate_result
+
+    def get_stock_pool(self):
+        '''
+        返回股票池里的股票
+        ～～～～～～～～～～～～～～～
+        Type: Dict
+        Include: date, stock_set, pool_size, rule
+        '''
+        stock_pool = self.db_source.get_stock_pool()
+        if stock_pool is None:
+            logger.error("stock pool is Null")
+            return dict()
+        return stock_pool
+
+    def get_macd_rule_stock(self, stock_codes):
+        '''
+        返回一只股票的macd值，包含已经计算好的买卖点
+        ～～～～～～～～～～～～～～～
+        Type: Dict
+        Include: date, stock_code, size, macd_set
+        '''
+        return self.db_source.get_macd_of_stock(stock_codes)
+
 
 if __name__ == '__main__':
     sd = StockDataSourceNet()

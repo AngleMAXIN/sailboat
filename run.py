@@ -1,9 +1,14 @@
-from sail.heat.rule.rule import BackTestRuleMacd
+from sail.heat.rule import BackTestRuleMacd, MacdRule
 # from celery_task.tasks import stock_pool_update
 
 # stock_pool_update()
-bm = BackTestRuleMacd()
-bm.start_back_test()
+
+latest = False
+macd = MacdRule(latest=latest)
+macd.compute_stock_pool_macd()
+# print("-"*50)
+# bm = BackTestRuleMacd()
+# bm.start_back_test()
 # back_test()
 # from sail.db import db 
 # from celery_task.tasks import stock_pool_update
