@@ -4,6 +4,7 @@ from sail.constant.constant import (KcbStockListURL, ShStockListURL,
                                     StockHisDataURL, SzStockListURL)
 from sail.db import db
 from sail.util import Spider, logger
+from celery_task.tasks import insert_stock_history_async
 
 __all__ = ['StockDataSourceNet',
            'StockDataSourceInternet', 'StockDataSourceDB']
@@ -94,11 +95,15 @@ class StockDataSourceInternet:
             code = r_code + self.prefix_code[r_code[0]]
             task_url.append(self.url_format.format(code))
 
-        self.data_tuple = self._from.get_stock_list(task_url)
+        self.stock_set = self._from.get_stock_list(task_url)
 
     def get_batch_stock_close(self, stock_codes=None):
         self._start_get_data(stock_codes)
-        return self.data_tuple
+        return self.stock_set
+
+    def async_insert(self):
+        for _set in self.stock_set:
+            insert_stock_history_async(_set)
 
 
 class StockDataSourceDB:
@@ -112,15 +117,15 @@ class StockDataSourceDB:
 
     def __init__(self):
         self.db_source = db
-        self.close_exclude = ['open', 'volume', 'ma5', 'ma10', 'ma20', ]
-        self.ma_exclude = ["open", "volume", ]
+    # self.close_exclude = ['open', 'volume', 'ma5', 'ma10', 'ma20', ]
+        # self.ma_exclude = ["open", "volume", ]
 
-        self.close_type = 2
-        self.ma_type = 1
+        # self.close_type = 2
+        # self.ma_type = 1
 
-    def _generate_df(self, one, _type=2):
-        code = one.get("stockid")
-        list_history = one.get("historydata")
+    def _generate_df(self, one):
+        code = one.get("stock_code")
+        list_history = one.get("history_data")
 
         df = pd.DataFrame(list_history)
         try:
@@ -128,12 +133,12 @@ class StockDataSourceDB:
         except KeyError:
             return code, None
 
-        if _type == self.ma_type:
-            lebels = self.ma_exclude
-        elif _type == self.close_type:
-            lebels = self.close_exclude
-
-        df = df.drop(lebels, axis=1)
+        # if _type == self.ma_type:
+            # lebels = self.ma_exclude
+        # elif _type == self.close_type:
+            # lebels = self.close_exclude
+ 
+        # df = df.drop(lebels, axis=1)
         # print(df.columns)
         return code, df
 
@@ -148,7 +153,7 @@ class StockDataSourceDB:
         if not stock_code:
             return
         one = self.db_source.get_one_stock(stock_code=stock_code)
-        _, df = self._generate_df(one, self.ma_type)
+        _, df = self._generate_df(one)
         return df
 
     def get_one_stock_close(self, stock_code=""):
@@ -163,7 +168,7 @@ class StockDataSourceDB:
         one = self.db_source.get_one_stock(stock_code=stock_code)
         if not one:
             return
-        _, df = self._generate_df(one, self.close_type)
+        _, df = self._generate_df(one)
         return df
 
     def get_batch_stock_close(self, stock_codes=None):
@@ -177,7 +182,7 @@ class StockDataSourceDB:
 
         if not result_set:
             return
-        generate_result = (self._generate_df(one, 2) for one in result_set)
+        generate_result = (self._generate_df(one) for one in result_set)
         return generate_result
 
     def get_stock_pool(self):

@@ -46,7 +46,6 @@ class Spider:
             parsed_result = self._parse_short_data(res_text)
         else:
             # crawl list stock history data
-            # if list_type:
             parsed_result = (self._parse_long_data(text)
                              for text in res_text)
         return parsed_result
@@ -69,31 +68,36 @@ class Spider:
     def _parse_long_data(self, res_text):
         """
             parse one stock history data
-            return : List[List]
+            return : {stock_code,stock_his_size,history_data}
         """
         if len(res_text) < 2:
             logger.error("res_text len < 2")
             return
+        result = dict()
         try:
             raw = json.loads(res_text[1:-1])
             raw_data = raw.get('data')
             code = raw.get("code")
+            total = raw.get("info",dict()).get("total",0)
+            result["stock_code"] = code
+            result["stock_his_size"] = total
         except json.decoder.JSONDecodeError as e:
             logger.error(e)
-            return []
+            return result
 
-        stock_list = []
+        history_list = []
         for raw in raw_data:
             raw_line = raw.split(",")
             if len(raw_line) > 2:
-                stock_list.append(
+                history_list.append(
                     {
                         "date": raw_line[0],
                         "close": raw_line[2],
                     }
                 )
+        result["history_data"] = history_list
 
-        return code, tuple(stock_list)
+        return result
 
     def _parse_short_data(self, res_text=""):
         """

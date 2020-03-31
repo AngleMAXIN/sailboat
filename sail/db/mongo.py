@@ -46,6 +46,14 @@ class DB:
             coll.insert_one(document)
         return "ok"
 
+    def insert_stock_history(self, document, coll_name=""):
+
+        coll = coll_name if coll_name else self.STOCK_RAW_COLL
+        _filter = {"stock_code": document['stock_code']}
+        update = {"$set": {"history_data": document['history_data']}}
+
+        return self._insert(_filter, update, document, coll)
+
     def insert_stock_macd(self, document, coll_name=""):
         """
         document :{
