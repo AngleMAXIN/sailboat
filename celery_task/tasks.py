@@ -33,6 +33,9 @@ def stock_pool_update():
 def insert_chance_by_macd_async(doc):
     db.insert_stock_macd(doc)
 
+@app.task
+def insert_stock_history_async(doc):
+    db.insert_stock_history(doc)
 
 if __name__ == "__main__":
     stock_pool_update()
