@@ -1,10 +1,10 @@
-from sail.heat.rule import BackTestRuleMacd, MacdRule
+from sail.heat.rule import BackTestRuleMacd, Rule
 # from celery_task.tasks import stock_pool_update
 
 # stock_pool_update()
 
 latest = False
-macd = MacdRule(latest=latest)
+macd = Rule(latest=latest)
 macd.compute_stock_pool_macd()
 # print("-"*50)
 # bm = BackTestRuleMacd()

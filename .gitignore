@@ -1,4 +1,5 @@
 .idea/
+lib/
 .vscode/
 testCode/
 db_volume/

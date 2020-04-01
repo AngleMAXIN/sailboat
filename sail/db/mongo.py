@@ -15,6 +15,7 @@ class DB:
     STOCK_RAW_COLL = "stock"
     POOL_COLL = "pool_his"
     STOCK_MACD_COLL = "stock_macd_his"
+    STOCK_MA_COLL = "stock_ma_his"
 
     def __init__(self, url):
         self.url = url
@@ -65,6 +66,28 @@ class DB:
         """
 
         coll = coll_name if coll_name else self.STOCK_MACD_COLL
+        if not self.is_clean:
+            # 清除以往的数据，保证每一次计算都是最新的数据
+            self.db[coll].drop()
+            self.is_clean = True
+
+        _filter = {"date": document['date'],
+                  "stock_code": document['stock_code']}
+        update = {"$set": {"macd_set": document['macd_set']}}
+
+        return self._insert(_filter, update, document, coll)
+
+    def insert_stock_ma(self, document, coll_name=""):
+        """
+        document :{
+            date,
+            stock_code,
+            size,
+            macd_set,
+        }
+        """
+
+        coll = coll_name if coll_name else self.STOCK_MA_COLL
         if not self.is_clean:
             # 清除以往的数据，保证每一次计算都是最新的数据
             self.db[coll].drop()

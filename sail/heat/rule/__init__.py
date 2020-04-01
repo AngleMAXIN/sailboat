@@ -1,1 +1,1 @@
-from .macd import *
+from .rule import *

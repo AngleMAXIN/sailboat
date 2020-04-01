@@ -6,12 +6,12 @@ import gevent
 import numpy as np
 import pandas as pd
 
-from celery_task.tasks import insert_chance_by_macd_async, stock_pool_update
+from celery_task.tasks import insert_chance_by_macd_async, stock_pool_update, insert_chance_by_ma_async
 from sail.db import db
-from sail.util import get_macd
-from sail.water import StockDataSourceDB, StockDataSourceInternet
+from sail.util import get_macd, get_ma
+from sail.water import StockDataSourceDB
 
-__all__ = ['MacdRule', 'BackTestRuleMacd']
+__all__ = ['Rule', 'BackTestRuleMacd']
 
 
 def set_trading_time(df):
@@ -30,10 +30,7 @@ def set_trading_time(df):
 
 
 def select_time_by_macd(code, df):
-    # df DateFrame
-    # if not df:
-    #     return
-    # df.close = df.close.astype(np.float)
+
     _, _, _macd = get_macd(df.close.values)
 
     df.insert(1, "macd", _macd)
@@ -52,19 +49,54 @@ def select_time_by_macd(code, df):
 
     insert_chance_by_macd_async.delay(document)
 
+def set_trading_time_ma(df):
+    s2 = df["ma5"] > df["ma30"]
+    s1 = df["ma5"] < df["ma30"]
 
-class MacdRule:
+    gold=df.loc[~(s1 | s2.shift(1))].index
+    death=df.loc[(s1 & s2.shift(1))].index 
+    g1=pd.Series(1,index=gold)                   #金叉标志位 1
+    d1=pd.Series(0,index=death)                  #死叉标志位 0
+    gd=g1.append(d1).sort_index()
+
+    df.append(gb)
+    return df
+
+def select_time_by_ma(code, df):
+    ma5, ma10, ma20 = get_ma(df.close.values)
+    df["ma5"] = ma5
+    df["ma10"] = ma10
+    df["ma20"] =ma20
+    
+    df.dropna(axis=0, how="any", inplace=True)
+    df.reset_index(drop=True, inplace=True)
+
+    df_time = set_trading_time_ma(df)
+
+    document = {
+        "date":date.today().isoformat(),
+        "stock_code":code,
+        "size":int(df_time.shape[0]),
+        "macd_set":df_time.values.tolist(),
+    }
+
+    insert_chance_by_ma_async(document)
+
+class Rule:
+    """
+    指标计算 例如MACD,MA,KDJ等
+    """
     def __init__(self, latest=False, from_internet=False):
         # 股票来源 股票池，所有股票
         self.latest = latest
         self.from_internet = from_internet
 
         self.db_source = StockDataSourceDB()
-        self.internet_source = StockDataSourceInternet()
 
         self.pool = Pool(cpu_count())
 
-        self._compute_func = select_time_by_macd
+        self._compute_macd_func = select_time_by_macd
+        self._compute_ma_func = select_time_by_ma
 
     def _get_raw_close(self):
         list_stock_code = list()
@@ -77,29 +109,41 @@ class MacdRule:
         else:
             source = self.db_source
 
-        list_stock_code = self.db_source.get_stock_pool()
-        stock_codes = list_stock_code.get("stock_set")
+        stock_codes = self.db_source.get_stock_pool().get("stock_set")
 
         raw_data = source.get_batch_stock_close(stock_codes)
         return raw_data
 
     def compute_stock_pool_macd(self):
-        start_time = time.time()
+        rule = "macd"
+        self._compute(raw_data, rule)
+
+    def computer_stock_pool_ma(self):
+        rule = "ma"
+        self._compute(raw_data, rule)
+
+    def _compute(self, raw_data, rule_type="macd"):
+
+        if rule_type == "macd":
+            f = self._compute_macd_func
+        elif rule_type == "ma":
+            f = self._compute_ma_func
+        else:
+            print("error rule:", rule)
+            return
 
         raw_data = self._get_raw_close()
 
-        self._compute_macd(raw_data)
-
-        print("compiter macd end, time cost: {0:.2f}s \n{1}".format(
-            time.time() - start_time, "=" * 35))
-
-    def _compute_macd(self, raw_data):
-
+        start_time = time.time()
         for code, data in raw_data:
             self.pool.apply_async(func=self._compute_func, args=(code, data,))
 
         self.pool.close()
         self.pool.join()
+
+        print("compiter {0} end, time cost: {1:.2f}s \n{2}".format(rule_type,
+            time.time() - start_time, "=" * 35))
+        
 
 
 class BackTestRuleMacd:
@@ -155,9 +199,7 @@ class BackTestRuleMacd:
         print("finally money:", sum(self.back_result))
 
 def back_test_one_stock(task_id, stock_code, macd_chance, size, initial_capital=10000):
-    # macd_rule_set = self.db_source.get_macd_rule_stock(stock_code)
-    # macd_chance = macd_rule_set.get("macd_set")
-    print(task_id, end=" ")
+
     start_initial_cap = initial_capital
     buy_num, first_up = 0, False, 
 
@@ -174,6 +216,7 @@ def back_test_one_stock(task_id, stock_code, macd_chance, size, initial_capital=
             price = macd_chance[i][1]
             buy_out = price * buy_num
             initial_capital += buy_out
+            buy_num = 0
             # print("买出时间：{}, 钱包：{}, 仓库：{}".format(macd_chance[i][0], int(initial_capital), buy_num * price))
     cur_price = macd_chance[-1][1]
     open_funds = initial_capital + buy_num * cur_price
