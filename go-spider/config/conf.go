@@ -9,9 +9,9 @@ const (
 	KcbStockListURL = "http://84.push2.eastmoney.com/api/qt/clist/get?pn=1&pz=%d&po=1&np=1&ut=bd1d9ddb04089700cf9c27f6f7426281&fltt=2&invt=2&fid=f3&fs=m:1+t:23&fields=f12,f14&_=1580530618599"
 	// StockInfoURL 单个股票，从17年9月份到现在
 	StockInfoURL = "http://api.finance.ifeng.com/akdaily/?code=%s&type=last"
-	// StockHisDataURL 单只股票的历史数据，从上市到现在 
-	StockHisDataURL = "http://pdfm.eastmoney.com/EM_UBG_PDTI_Fast/api/js?token=4f1862fc3b5e77c150a2b985b12db0fd&rtntype=6&id={0}&type=k"
-	
+	// StockHisDataURL 单只股票的历史数据，从上市到现在
+	StockHisDataURL = "http://pdfm.eastmoney.com/EM_UBG_PDTI_Fast/api/js?token=4f1862fc3b5e77c150a2b985b12db0fd&rtntype=6&id=%s&type=k"
+
 	// IsStockList 是否爬取股票列表
 	IsStockList = true
 	// IsStockInfo 是否爬取股票详情
@@ -40,6 +40,7 @@ const (
 	DBPoolSize = uint64(50)
 	// DBconnURI 数据库连接uri
 	DBconnURI = "mongodb://admin:maxin123@localhost:27017"
+	// DBconnURI = "mongodb://39.106.120.138:27017"
 	// DBName 数据库连接名称
 	DBName = "sailboat_db"
 )

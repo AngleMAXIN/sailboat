@@ -1,3 +1,4 @@
+import time
 from datetime import date
 
 from gevent import monkey as curious_george
@@ -9,14 +10,15 @@ from sail.constant import DBURL
 
 
 __all__ = ['db']
-
+ 
 
 class DB:
     STOCK_RAW_COLL = "stock"
     POOL_COLL = "pool_his"
     STOCK_MACD_COLL = "stock_macd_his"
     STOCK_MA_COLL = "stock_ma_his"
-
+    BACK_TEST_RES = "back_test_res"
+    
     def __init__(self, url):
         self.url = url
         self.client = MongoClient(self.url, maxPoolSize=40)
@@ -35,7 +37,7 @@ class DB:
         coll = coll_name if coll_name else self.POOL_COLL
         _filter = {"date": document['date']}
         update = {"$set": {"stock_set": document['stock_set']}}
-
+        document["pool_id"] = int(time.time())
         return self._insert(_filter, update, document, coll)
 
     def _insert(self, _filter, update, document, coll_name):
@@ -49,11 +51,20 @@ class DB:
 
     def insert_stock_history(self, document, coll_name=""):
 
-        coll = coll_name if coll_name else self.STOCK_RAW_COLL
-        _filter = {"stock_code": document['stock_code']}
-        update = {"$set": {"history_data": document['history_data']}}
+        coll =  self.STOCK_RAW_COLL
+        _filter = {"stock_code": document.get('stock_code',"")}
+        update = {"$set": {"history_data": document.get('history_data')}}
 
         return self._insert(_filter, update, document, coll)
+
+    def insert_back_test_result(self, document, coll_name=""):
+
+        coll = coll_name if coll_name else self.BACK_TEST_RES
+        _filter = {"date": document['date']}
+        update = {"$set": {"stock_set": document['stock_set']}}
+
+        return self._insert(_filter, update, document, coll)
+
 
     def insert_stock_macd(self, document, coll_name=""):
         """
@@ -115,6 +126,16 @@ class DB:
     def get_macd_of_stock(self, stock_codes=None):
 
         coll = self.db[self.STOCK_MACD_COLL]
+        if len(stock_codes) < 2:
+            _filter = {"stock_code": stock_codes}
+        else:
+            _filter = {"stock_code": {"$in":stock_codes}}
+        result_data = coll.find(_filter)
+        return result_data
+
+    def get_ma_of_stock(self, stock_codes=None):
+
+        coll = self.db[self.STOCK_MA_COLL]
         if len(stock_codes) < 2:
             _filter = {"stock_code": stock_codes}
         else:

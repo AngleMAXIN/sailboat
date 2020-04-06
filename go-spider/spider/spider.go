@@ -11,6 +11,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -19,10 +20,10 @@ var (
 	// StockCount all stock counte
 	stockSetChan = make(chan *common.StockSetItem, 2)
 
-	stockShareMap = map[string]string{
-		"kcb": "sh",
-		"sh":  "sh",
-		"sz":  "sz",
+	stockShareMap = map[byte]string{
+		'0': "2",
+		'6': "1",
+		'3': "2",
 	}
 )
 
@@ -38,7 +39,7 @@ func requestHeaders() *string {
 
 // doRequest 发起请求
 func doRequest(url string) ([]byte, error) {
-	sleepTime := rand.Intn(3000)
+	sleepTime := rand.Intn(6666)
 	time.Sleep(time.Microsecond * time.Duration(sleepTime))
 
 	client := &http.Client{}
@@ -77,24 +78,23 @@ func doRequest(url string) ([]byte, error) {
 
 // parseOneStockDetails parse one stock datails info every day
 func parseOneStockDetails(content []byte) []*common.StockDataDay {
+	content = content[1 : len(content)-1]
 	rawStock := &common.RawStockDetailInfo{}
 	if err := json.Unmarshal(content, rawStock); err != nil {
-		log.Printf("parse response data error: %s, data: %s", err, content)
-		return []*common.StockDataDay{}
+		log.Printf("parse stock detail info error: %s, data: %s", err, content)
+		return nil
 	}
 
-	stockSet := rawStock.Record
+	stockSet := rawStock.Data
 	stockResultSet := make([]*common.StockDataDay, 0, len(stockSet))
 	for i := 0; i < len(stockSet); i++ {
 		day := stockSet[i]
+		splitRes := strings.Split(day, ",")
 		stock := new(common.StockDataDay)
-		stock.Date = day[0]
-		stock.Open, _ = strconv.ParseFloat(day[1], 64)
-		stock.Close, _ = strconv.ParseFloat(day[3], 64)
-		stock.Volume, _ = strconv.ParseFloat(day[5], 64)
-		stock.Ma5, _ = strconv.ParseFloat(day[8], 64)
-		stock.Ma10, _ = strconv.ParseFloat(day[9], 64)
-		stock.Ma20, _ = strconv.ParseFloat(day[10], 64)
+		stock.Date = splitRes[0]
+		stock.Close, _ = strconv.ParseFloat(splitRes[2], 64)
+		stock.High, _ = strconv.ParseFloat(splitRes[3], 64)
+		stock.Low, _ = strconv.ParseFloat(splitRes[4], 64)
 
 		stockResultSet = append(stockResultSet, stock)
 	}
@@ -105,16 +105,16 @@ func parseOneStockDetails(content []byte) []*common.StockDataDay {
 func parseStockList(content []byte, share string) []*common.RawStockInfo {
 	var res common.RawStockList
 	if err := json.Unmarshal(content, &res); err != nil {
-		log.Printf("parse StockList share: %s, error: %s\n", share, err)
+		log.Printf("parse stock code list error, share: %s, error: %s\n", share, err)
 	}
 
 	log.Printf("stock type: %s, total: %d\n", share, res.Data.Total)
 
 	stockList := res.Data.Diff
-	codePrefix := stockShareMap[share]
 
 	for i := 0; i < int(res.Data.Total); i++ {
-		stockList[i].StockCode = codePrefix + stockList[i].StockID
+		code := stockList[i].StockID
+		stockList[i].StockCode = stockList[i].StockID + stockShareMap[code[0]]
 	}
 	return stockList
 }
@@ -137,7 +137,7 @@ func crawlStockList(wg *sync.WaitGroup, urlFomart string, share string) {
 }
 
 func crawlOneStock(stockCode string) []*common.StockDataDay {
-	url := fmt.Sprintf(config.StockInfoURL, stockCode)
+	url := fmt.Sprintf(config.StockHisDataURL, stockCode)
 	content, err := doRequest(url)
 	if err != nil {
 		log.Printf("crawlOneStockInfo error: %s, url: %s", err, url)

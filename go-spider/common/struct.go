@@ -25,7 +25,8 @@ package common
 
 type RawStockDetailInfo struct {
 	// Code string
-	Record [][]string `json:"record"`
+	Code string   `json:"code,omitempty"`
+	Data []string `json:"data,omitempty"`
 }
 
 type StockSetItem struct {
@@ -38,7 +39,7 @@ type RawStockList struct {
 }
 
 type resStock struct {
-	Total int           `json:"total"`
+	Total int             `json:"total"`
 	Diff  []*RawStockInfo `json:"diff"`
 }
 
@@ -49,6 +50,7 @@ type RawStockInfo struct {
 	StockCode string
 }
 
+// StockDetail 单只股票的存储体
 type StockDetail struct {
 	StockName   string
 	StockID     string
@@ -61,7 +63,7 @@ type StockDetail struct {
 // 	stock stockDetail
 // }
 
-type StockDataDay struct {
+type StockDataDay_1 struct {
 	Open   float64
 	Close  float64
 	Volume float64 // 交易量
@@ -69,4 +71,12 @@ type StockDataDay struct {
 	Ma10   float64
 	Ma20   float64
 	Date   string
+}
+
+// StockDataDay 单只股票的历史数据存储体
+type StockDataDay struct {
+	Date  string
+	Close float64
+	High  float64
+	Low   float64
 }

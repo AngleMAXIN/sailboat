@@ -1,20 +1,13 @@
-from sail.heat.rule import BackTestRuleMacd, Rule
-# from celery_task.tasks import stock_pool_update
+import time
+from sail.heat.rule import Rule, BackTestRuleMacd
+from sail.water.data import StockDataSourceInternet, StockDataSourceNet
+from celery_task.tasks import stock_pool_update, insert_stock_history_async
 
-# stock_pool_update()
 
-latest = False
-macd = Rule(latest=latest)
-macd.compute_stock_pool_macd()
-# print("-"*50)
-# bm = BackTestRuleMacd()
-# bm.start_back_test()
-# back_test()
-# from sail.db import db 
-# from celery_task.tasks import stock_pool_update
-
-# stock_pool_update()
-# stock_pool_code_list = db.find_stock_pool()
-# print(stock_pool_code_list)
-# mr = MacdRule(stock_pool_code_list[10:])
-# mr.run()
+# latest =  False
+# rule = Rule(latest=latest)
+# rule.compute_stock_pool_ma()
+print("-"*50)
+is_debug = 0
+back_test = BackTestRuleMacd(is_debug)
+back_test.back_test_ma()

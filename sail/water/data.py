@@ -4,7 +4,6 @@ from sail.constant.constant import (KcbStockListURL, ShStockListURL,
                                     StockHisDataURL, SzStockListURL)
 from sail.db import db
 from sail.util import Spider, logger
-from celery_task.tasks import insert_stock_history_async
 
 __all__ = ['StockDataSourceNet',
            'StockDataSourceInternet', 'StockDataSourceDB']
@@ -65,13 +64,20 @@ class StockDataSourceNet:
 
         return tuple(all_stock)
 
+    def get_stock_codes(self):
+        # 返回沪深A股的所有股票代码 
+        # list
+        code_tuple = self.get_all_stock_data()
+        codes = [item['f12'] for item in code_tuple]
+        return codes
+
 
 class StockDataSourceInternet:
     """
     Data from crawl Internet, include one stock all history, data fields: [date, open, close]
     """
 
-    def __init__(self, ):
+    def __init__(self):
         self.type = "one"
         self._from = Spider(self.type)
 
@@ -79,7 +85,7 @@ class StockDataSourceInternet:
         self.data_map = {}
         self.data_tuple = tuple()
         # stock_code prefix 0, is sz ,suffix is 2; prefix is 6, is sh, suffix is 1
-        self.prefix_code = {"0": "2", "6": "1"}
+        self.prefix_code = {"0": "2", "6": "1","3": "2"}
 
         self.url_format = StockHisDataURL
 
@@ -94,17 +100,16 @@ class StockDataSourceInternet:
         for r_code in stock_codes:
             code = r_code + self.prefix_code[r_code[0]]
             task_url.append(self.url_format.format(code))
-
         self.stock_set = self._from.get_stock_list(task_url)
 
     def get_batch_stock_close(self, stock_codes=None):
         self._start_get_data(stock_codes)
         return self.stock_set
 
-    def async_insert(self):
-        for _set in self.stock_set:
-            insert_stock_history_async(_set)
 
+if __name__ == '__main__':
+    s = StockDataSourceInternet()
+    s.get_all_history()
 
 class StockDataSourceDB:
     """
@@ -124,22 +129,15 @@ class StockDataSourceDB:
         # self.ma_type = 1
 
     def _generate_df(self, one):
-        code = one.get("stock_code")
-        list_history = one.get("history_data")
+        code = one.get("stockid")
+        list_history = one.get("historydata")
 
         df = pd.DataFrame(list_history)
         try:
             df.set_index(['date'], inplace=True)
-        except KeyError:
+        except KeyError as e:
+            print("_generate_df error:{0}, code {1}".format(e,code))
             return code, None
-
-        # if _type == self.ma_type:
-            # lebels = self.ma_exclude
-        # elif _type == self.close_type:
-            # lebels = self.close_exclude
- 
-        # df = df.drop(lebels, axis=1)
-        # print(df.columns)
         return code, df
 
     def get_one_stock_ma(self, stock_code=""):
@@ -176,10 +174,10 @@ class StockDataSourceDB:
         批量返回一批股票的历史收盘价
         ～～～～～～～～～～～～～～～
         Type: Tuple(Tuple(string, DataFrame))
-        Include: code, df
+        Include:  code string
+                         df index :  date, volumn: [close]
         '''
         result_set = self.db_source.get_all_stock(stock_codes)
-
         if not result_set:
             return
         generate_result = (self._generate_df(one) for one in result_set)
@@ -206,6 +204,15 @@ class StockDataSourceDB:
         Include: date, stock_code, size, macd_set
         '''
         return self.db_source.get_macd_of_stock(stock_codes)
+
+    def get_ma_rule_stock(self, stock_codes):
+        '''
+        返回一只股票的ma值，包含已经计算好的买卖点
+        ～～～～～～～～～～～～～～～
+        Type: Dict
+        Include: date, stock_code, size, macd_set
+        '''
+        return self.db_source.get_ma_of_stock(stock_codes)
 
 
 if __name__ == '__main__':

@@ -37,6 +37,9 @@ func NewTask(argFunc func(stockCode string) []*common.StockDataDay, s *common.Ra
 
 func (t *Task) execute() *common.StockDetail {
 	t.result.HistoryData = t.f(t.params)
+	if t.result.HistoryData == nil {
+		fmt.Printf("execute stock code: %s failed", t.result.StockID)
+	}
 	return t.result
 }
 

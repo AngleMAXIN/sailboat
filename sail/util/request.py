@@ -11,7 +11,7 @@ class Spider:
         self.url = ""
         self.share = ""
         self.sync_size = 4
-        self._type = _type if _type else "one"
+        self._type = _type 
 
     def _get(self):
         import requests
@@ -32,15 +32,15 @@ class Spider:
         return res_text
 
     def get_stock_list(self, url_args, share=""):
-        str_type = isinstance(url_args, str)
         res_text = ""
+
+        str_type = isinstance(url_args, str)
         if str_type:
             res_text = self._get_by_sync(url_args, share)
-
         list_type = isinstance(url_args, list)
         if list_type:
             res_text = self._get_by_async(url_args)
-
+            
         if self._type == "all":
             # crawl all stock list
             parsed_result = self._parse_short_data(res_text)
@@ -57,12 +57,12 @@ class Spider:
             异步爬取数据
         """
 
-        def _exception_handler(self, r, exception):
-            print(r, exception)
+        # def _exception_handler(self, r, exception):
+            # print(r, exception)
 
         rs = (grequests.get(url) for url in urls)
         result = (res.text for res in grequests.map(
-            rs, size=self.sync_size, exception_handler=_exception_handler))
+            rs, size=self.sync_size))
         return result
 
     def _parse_long_data(self, res_text):
@@ -96,7 +96,6 @@ class Spider:
                     }
                 )
         result["history_data"] = history_list
-
         return result
 
     def _parse_short_data(self, res_text=""):
