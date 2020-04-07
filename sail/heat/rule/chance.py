@@ -27,9 +27,12 @@ def select_time_by_macd(code, df):
     if df is None:
         print("df is None code:", code)
         return
-    _, _, _macd = get_macd(df.close.values)
+    
+    df.drop('high',axix=1，inplace=True)
+    df.drop('low',axix=1，inplace=True)
 
-    df.insert(1, "macd", _macd)
+    _, _, _macd = get_macd(df.close.values)
+    df["macd"] = _macd
     df.dropna(axis=0, how="any", inplace=True)
     df.reset_index(drop=False, inplace=True)
 
@@ -63,6 +66,9 @@ def set_trading_time_ma(df):
 
 
 def select_time_by_ma(code, df):
+    df.drop('high',axix=1，inplace=True)
+    df.drop('low',axix=1，inplace=True)
+
     ma5, ma10, ma20 = get_ma(df.close.values)
     df["ma5"] = ma5
     df["ma10"] = ma10
@@ -78,7 +84,7 @@ def select_time_by_ma(code, df):
         "stock_code": code,
         "size": int(df_time.shape[0]),
         "macd_set": df_time.values.tolist(),
-    }
+ }
 
     insert_chance_by_ma_async.delay(document)
 
@@ -91,6 +97,5 @@ def select_time_by_kdj(code, df):
                         slowk_matype=0,
                         slowd_period=3,
                         slowd_matype=0)
-    a = 1
-    b = 2
     df['kdj_j'] = 3*df['kdj_k']-2*df['kdj_d'];
+    return df
