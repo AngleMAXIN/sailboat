@@ -81,3 +81,16 @@ def select_time_by_ma(code, df):
     }
 
     insert_chance_by_ma_async.delay(document)
+
+def select_time_by_kdj(code, df):
+    df['kdj_k'], df['kdj_d'] = ta.STOCH(df['high'].values,
+                        df['low'].values,
+                        fd['close'].values,
+                        fastk_period=9,
+                        slowk_period=3,
+                        slowk_matype=0,
+                        slowd_period=3,
+                        slowd_matype=0)
+    a = 1
+    b = 2
+    df['kdj_j'] = 3*df['kdj_k']-2*df['kdj_d'];
