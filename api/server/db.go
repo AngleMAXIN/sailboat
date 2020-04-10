@@ -21,15 +21,17 @@ type dbInstance struct {
 	poolSize      uint64
 	connURI       string
 	stockPoolColl string
+	backTestColl  string
 }
 
-// InitDB 初始化
+// 初始化
 func init() {
 	saver := &dbInstance{
 		dbName:        dbName,
 		connURI:       dbConnURI,
 		poolSize:      dbPoolSize,
-		stockPoolColl: stockPoolcollName,
+		stockPoolColl: stockPoolCollName,
+		backTestColl:  backTestCollName,
 	}
 	client, err := saver.setConnect()
 	if err != nil {
@@ -68,7 +70,15 @@ func (db *dbInstance) GetStockPoolData() (*stockPool, error) {
 }
 
 //kdj ma macd
-func (db *dbInstance) GetBackTestResultData() (interface{}, error) {
+func (db *dbInstance) GetBackTestResultData() (*backTestResult, error) {
 	// 三种指标，有两个盈利，就买这只股票，相反，就卖出
+	singleResult := &backTestResult{}
+	c, _ := db.client.Database(db.dbName).Collection(db.backTestColl).Clone()
+	err := c.FindOne(context.TODO(), bson.D{}).Decode(singleResult)
+
+	if err != nil {
+		return nil, err
+	}
+	return singleResult, nil
 	return nil,nil
 }

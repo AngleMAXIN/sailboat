@@ -17,7 +17,7 @@ class DB:
     POOL_COLL = "pool_his"
     STOCK_MACD_COLL = "stock_macd_his"
     STOCK_MA_COLL = "stock_ma_his"
-    BACK_TEST_RES = "back_test_res"
+    BACK_TEST_RES = "back_test_his"
     
     def __init__(self, url):
         self.url = url
@@ -51,7 +51,7 @@ class DB:
 
     def insert_stock_history(self, document, coll_name=""):
 
-        coll =  self.STOCK_RAW_COLL
+        coll = self.STOCK_RAW_COLL
         _filter = {"stock_code": document.get('stock_code',"")}
         update = {"$set": {"history_data": document.get('history_data')}}
 

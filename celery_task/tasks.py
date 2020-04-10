@@ -16,10 +16,11 @@ def stock_pool_update():
     # get stock pool
     sp.get_pool()
 
-    values, size = sp.to_stock_code_list()
+    values, names, size = sp.to_stock_code_list()
     document = {
         "date": date.today().isoformat(),
         "stock_set": values,
+        "stock_name": names,
         "pool_size": size,
         "rule": "pe"
     }

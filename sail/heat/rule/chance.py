@@ -97,5 +97,20 @@ def select_time_by_kdj(code, df):
                         slowk_matype=0,
                         slowd_period=3,
                         slowd_matype=0)
-    df['kdj_j'] = 3*df['kdj_k']-2*df['kdj_d'];
+    return df
+
+
+def set_trading_time_kdj(df):
+    s2 = (df["kdj_k"] > df["kdj_d"]) & (df['kdj_k'] < 20)
+    s1 = (df["kdj_d"] < df["kdj_k"]) & (df['kdj_d'] > 80)
+
+    gold = df.loc[~(s1 | s2.shift(1))].index
+    death = df.loc[(s1 & s2.shift(1))].index
+    g1 = pd.Series(1, index=gold)  # 金叉标志位 1
+    d1 = pd.Series(-1, index=death)  # 死叉标志位 -1
+    gb = g1.append(d1).sort_index()
+    gb.name = "chance"
+
+    df = pd.concat([df, gb], axis=1)
+    df.dropna(axis=0, how="any", inplace=True)
     return df

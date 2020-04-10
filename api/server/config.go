@@ -8,5 +8,6 @@ const (
 	// DBName 数据库连接名称
 	dbName = "sailboat_db"
 	
-	stockPoolcollName = "pool_his"
+	stockPoolCollName = "pool_his"
+	backTestCollName = "back_test_his"
 )

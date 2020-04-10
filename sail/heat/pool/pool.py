@@ -53,7 +53,8 @@ class StockPool:
 
     def to_stock_code_list(self):
         stock_code = self.pool_stock['stock_code'].to_numpy()
-        return stock_code.tolist(), stock_code.size
+        stock_name = self.pool_stock['stock_name'].to_numpy()
+        return stock_code.tolist(), stock_name.tolist(), stock_code.size
 
 
 if __name__ == '__main__':

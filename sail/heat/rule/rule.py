@@ -1,6 +1,7 @@
 import time
 from datetime import date
 from multiprocessing import Pool, cpu_count
+from collections import Counter
 
 import pandas as pd
 
@@ -8,9 +9,9 @@ from celery_task.tasks import (insert_chance_by_ma_async,
                                insert_chance_by_macd_async, stock_pool_update)
 from sail.util import get_ma, get_macd
 from sail.water import StockDataSourceDB
-from .chance import select_time_by_ma, select_time_by_macd
-
-__all__ = ['Rule', 'BackTestRuleMacd']
+from .chance import select_time_by_ma, select_time_by_macd, select_time_by_kdj
+from sail.db import db
+__all__ = ['Rule', 'BackTestRule']
 
 
 class Rule:
@@ -50,6 +51,10 @@ class Rule:
         rule = "ma"
         self._compute(self._get_raw_close(), rule)
 
+    def compute_stock_pool_kdj(self):
+        rule = "kdj"
+        self._compute(self._get_raw_close(), rule)
+
     def _compute(self, raw_data, rule_type="macd"):
 
         if rule_type == "macd":
@@ -71,7 +76,7 @@ class Rule:
                                                                    time.time() - start_time, "=" * 35))
 
 
-class BackTestRuleMacd:
+class BackTestRule:
     """
         对按照macd计算得来的买卖点进行回测
         每只股票的初始资金为10000，对比按买卖点交易之后，是否盈利
@@ -117,38 +122,32 @@ class BackTestRuleMacd:
         elif _type == "ma":
             result = self.db_source.get_ma_rule_stock(self.stock_set)
 
-        self.down_stock_set = []
-        self.up_stock_set = []
-
         init_data_set = ((macd.get("stock_code"), macd.get(
             "macd_set"), macd.get("size"), self.base_initial_cap) for macd in result)
         self.init_data_set = init_data_set
 
-    def _save_result(self, _type):
-        up_stock_number = len(self.up_stock_set)
-        down_stock_number = len(self.down_stock_set)
+    def _save_result(self):
+        up_stock_state = Counter(self.up_stock_set)
+        down_stock_state = Counter(self.down_stock_set)
+
         test_result = {
             "date": date.today().isoformat(),
-            "rule_by": _type,
-            "up_stock_set": {"stock_set": self.up_stock_set, "total": up_stock_number},
-            "down_stock_set": {"stock_set": self.down_stock_set, "total": down_stock_number},
-            "total": up_stock_number+down_stock_number,
+            "up_stock_set": {"stock_set": up_stock_set.most_common(), "total": len(up_stock_set)},
+            "down_stock_set": {"stock_set": down_stock_set.most_common(), "total": len(down_stock_set)},
         }
-        pass
 
-    def back_test_ma(self):
-        _type = "ma"
-        self._prepare_test_cases(_type)
-        self._back_test()
-        print("盈利股票: {}只， 亏损股票: {}只".format(
-            len(self.up_stock_set), len(self.down_stock_set)))
 
-    def back_test_macd(self):
-        _type = "macd"
-        self._prepare_test_cases(_type)
-        self._back_test()
-        print("盈利股票: {}只， 亏损股票: {}只".format(
-            len(self.up_stock_set), len(self.down_stock_set)))
+    def back_test(self):
+        _types = ("ma","macd","kdj",)
+        for t in _types:
+            self._prepare_test_cases(_type)
+            self._back_test()
+
+        self._save_result()
+
+#         print("盈利股票: {}只， 亏损股票: {}只".format(
+#             len(self.up_stock_set), len(self.down_stock_set)))down_stock_set
+
 
     def _back_test(self):
         for code, macd_set, _, base_cap in self.init_data_set:
@@ -170,7 +169,7 @@ class BackTestRuleMacd:
                 initial_capital += buy_out
 
             if self.debug:
-                print("买出时间:{}, 价格: {}， 余额: {:.2f}".format(
+                print("买出时间:{}, 价格: {}，余额: {:.2f}".format(
                     test_case_set[i][0], price, initial_capital))
 
         cur_price = test_case_set[-1][1]
@@ -181,7 +180,7 @@ class BackTestRuleMacd:
         result = {
             "stock_code": stock_code,
             "balance:": open_funds,
-            "tprofitability": profitababilty,
+            "profitability": profitababilty,
         }
         if profitababilty > 0:
             self.up_stock_set.append(result)

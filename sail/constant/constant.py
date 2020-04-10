@@ -13,7 +13,8 @@ StockHisDataURL = "http://pdfm.eastmoney.com/EM_UBG_PDTI_Fast/api/js?token=4f186
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 StorePath = BASE_DIR + "/pool_stock_store"
 
-# DBURL = "mongodb://39.106.120.138:27017"
-DBURL = "mongodb://admin:maxin123@localhost:27017"
+DBURL = "mongodb://39.106.120.138:27017"
+# DBURL = "mongodb://admin:maxin123@localhost:27017"
 
 DB_COLL_POOL = "pool_his"
+DB_COLL_BACK_TEST = "back_test_his"

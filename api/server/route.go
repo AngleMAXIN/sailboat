@@ -18,14 +18,28 @@ func getStockPoolDataHandler(ctx *gin.Context) {
 	if err != nil {
 		code = resCodeNotResource
 	}
-	response := makeResponse(code, *stockPoolData)
+	response := makeResponse(code, stockPoolData)
+	ctx.JSON(http.StatusOK,response)
+	return
+}
+
+func getBackTestResultHandler(ctx *gin.Context)  {
+	code := resCodeOk
+	backTestResult,err := DB.GetBackTestResultData()
+	if err != nil{
+		code = resCodeNotResource
+	}
+	response := makeResponse(code,backTestResult)
 	ctx.JSON(http.StatusOK,response)
 	return
 }
 
 func StartServer() {
 	router := gin.Default()
+
 	router.GET("/api.v1/stock-pool", getStockPoolDataHandler)
+	router.GET("/api.v1/back-test-result", getBackTestResultHandler)
+
 	err := endless.ListenAndServe(":8081", router)
 	if err != nil {
 		log.Fatal(err)
