@@ -42,5 +42,9 @@ def insert_stock_history_async(doc):
 def insert_chance_by_ma_async(doc):
     db.insert_stock_ma(doc)
 
+@app.task
+def insert_chance_by_kdj_async(doc):
+    db.insert_stock_kdj(doc)
+
 if __name__ == "__main__":
     stock_pool_update()

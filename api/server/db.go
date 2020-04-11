@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"log"
 	"time"
 
@@ -56,29 +57,55 @@ func (db *dbInstance) setConnect() (*mongo.Client, error) {
 	return client, err
 }
 
-
 // GetStockPoolData 获取股票池
-func (db *dbInstance) GetStockPoolData() (*stockPool, error) {
-	singleResult := &stockPool{}
+func (db *dbInstance) GetStockPoolData() (interface{}, error) {
+	resultSet := &stockPoolResult{}
 	c, _ := db.client.Database(db.dbName).Collection(db.stockPoolColl).Clone()
-	err := c.FindOne(context.TODO(), bson.D{}).Decode(singleResult)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
+
+	option := options.FindOne().SetSort(bson.D{{"_id", -1}})
+
+	err := c.FindOne(ctx, bson.D{},option).Decode(resultSet)
+
+	select {
+	case <-ctx.Done():
+		err = errors.New("find timeout")
+	default:
+
+	}
 
 	if err != nil {
-		return nil, err
+		log.Println("db error:", err.Error())
 	}
-	return singleResult, nil
+	return resultSet, err
 }
 
-//kdj ma macd
-func (db *dbInstance) GetBackTestResultData() (*backTestResult, error) {
-	// 三种指标，有两个盈利，就买这只股票，相反，就卖出
+// GetBackTestResultData 获取回测结果
+func (db *dbInstance) GetBackTestResultData() (interface{}, error) {
+	
 	singleResult := &backTestResult{}
 	c, _ := db.client.Database(db.dbName).Collection(db.backTestColl).Clone()
-	err := c.FindOne(context.TODO(), bson.D{}).Decode(singleResult)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
+
+	option := options.FindOne().SetSort(bson.D{{"_id", -1}})
+
+	err := c.FindOne(ctx, bson.D{},option).Decode(singleResult)
+
+	select {
+	case <-ctx.Done():
+		err = errors.New("find timeout")
+	default:
+
+	}
 
 	if err != nil {
-		return nil, err
+		log.Println("db error:", err.Error())
 	}
-	return singleResult, nil
-	return nil,nil
+	return singleResult, err
+
 }
+
