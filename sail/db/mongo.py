@@ -41,11 +41,13 @@ class DB:
         document["pool_id"] = int(time.time())
         return self._insert(_filter, update, document, coll)
 
-    def _insert(self, _filter, update, document, coll_name):
+    def _insert(self, _filter=None, update=None, document=None, coll_name=""):
 
         coll = self.db[coll_name]
         # if document exist, update data
-        res = coll.find_one_and_update(_filter, update)
+        res = None
+        if update and _filter:
+            res = coll.find_one_and_update(_filter, update)
         if not res:
             coll.insert_one(document)
         return "ok"
@@ -61,9 +63,10 @@ class DB:
     def insert_back_test_result(self, document, coll_name=""):
 
         coll = coll_name if coll_name else self.BACK_TEST_RES
-        _filter = {"date": document['date']}
-        update = {"$set": {"stock_set": document['stock_set']}}
-
+        # _filter = {"date": document['date']}
+        # update = {"$set": {"stock_set": document['stock_set']}}
+        _filter = None
+        update = None
         return self._insert(_filter, update, document, coll)
 
 
@@ -101,6 +104,7 @@ class DB:
 
         coll = coll_name if coll_name else self.STOCK_MA_COLL
         if not self.is_clean:
+            print("clean data:",self.is_clean)
             # 清除以往的数据，保证每一次计算都是最新的数据
             self.db[coll].drop()
             self.is_clean = True
@@ -149,23 +153,25 @@ class DB:
     def get_macd_of_stock(self, stock_codes=None):
 
         coll = self.db[self.STOCK_MACD_COLL]
-        if len(stock_codes) < 2:
-            _filter = {"stock_code": stock_codes}
-        else:
-            _filter = {"stock_code": {"$in":stock_codes}}
-        result_data = coll.find(_filter)
-        return result_data
+        return self._get_data_of_stock(coll,stock_codes)
 
     def get_ma_of_stock(self, stock_codes=None):
 
         coll = self.db[self.STOCK_MA_COLL]
+        return self._get_data_of_stock(coll,stock_codes)
+
+    def get_kdj_of_stock(self, stock_codes=None):
+        coll = self.db[self.STOCK_KDJ_COLL]
+        return self._get_data_of_stock(coll,stock_codes)
+
+    def _get_data_of_stock(self, coll,stock_codes):
         if len(stock_codes) < 2:
             _filter = {"stock_code": stock_codes}
         else:
             _filter = {"stock_code": {"$in":stock_codes}}
         result_data = coll.find(_filter)
         return result_data
-
+        
     def get_all_stock(self,stock_codes=None):
         coll = self.db[self.STOCK_RAW_COLL]
         if not stock_codes:

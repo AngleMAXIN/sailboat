@@ -4,7 +4,7 @@ from datetime import date
 import pandas as pd
 
 from celery_task.tasks import (insert_chance_by_ma_async,
-                                insert_chance_by_kdj_async,
+                               insert_chance_by_kdj_async,
                                insert_chance_by_macd_async, stock_pool_update)
 from sail.util import get_ma, get_macd, get_kdj
 
@@ -28,9 +28,9 @@ def select_time_by_macd(code, df):
     if df is None:
         print("df is None code:", code)
         return
-    
-    df.drop('high',axix=1，inplace=True)
-    df.drop('low',axix=1，inplace=True)
+
+    df.drop('high', axis=1, inplace=True)
+    df.drop('low', axis=1, inplace=True)
 
     _, _, _macd = get_macd(df.close.values)
     df["macd"] = _macd
@@ -67,8 +67,8 @@ def set_trading_time_ma(df):
 
 
 def select_time_by_ma(code, df):
-    df.drop('high',axix=1，inplace=True)
-    df.drop('low',axix=1，inplace=True)
+    df.drop('high', axis=1, inplace=True)
+    df.drop('low', axis=1, inplace=True)
 
     ma5, ma10, ma20 = get_ma(df.close.values)
     df["ma5"] = ma5
@@ -85,12 +85,13 @@ def select_time_by_ma(code, df):
         "stock_code": code,
         "size": int(df_time.shape[0]),
         "macd_set": df_time.values.tolist(),
- }
+    }
 
     insert_chance_by_ma_async.delay(document)
 
+
 def select_time_by_kdj(code, df):
-    kdj_k, kdj_d = get_kdj(df)
+    kdj_k, kdj_d = get_kdj(df.close.values,df.high.values,df.low.values)
     df['kdj_k'] = kdj_k
     df['kdj_d'] = kdj_d
 

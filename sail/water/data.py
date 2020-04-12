@@ -111,6 +111,7 @@ if __name__ == '__main__':
     s = StockDataSourceInternet()
     s.get_all_history()
 
+
 class StockDataSourceDB:
     """
     Return data source from local storage
@@ -122,11 +123,6 @@ class StockDataSourceDB:
 
     def __init__(self):
         self.db_source = db
-    # self.close_exclude = ['open', 'volume', 'ma5', 'ma10', 'ma20', ]
-        # self.ma_exclude = ["open", "volume", ]
-
-        # self.close_type = 2
-        # self.ma_type = 1
 
     def _generate_df(self, one):
         code = one.get("stockid")
@@ -214,6 +210,14 @@ class StockDataSourceDB:
         '''
         return self.db_source.get_ma_of_stock(stock_codes)
 
+    def get_kdj_rule_stock(self, stock_codes):
+        '''
+        返回一只股票的kdj值，包含已经计算好的买卖点
+        ～～～～～～～～～～～～～～～
+        Type: Dict
+        Include: date, stock_code, size, macd_set
+        '''
+        return self.db_source.get_kdj_of_stock(stock_codes)
 
 if __name__ == '__main__':
     sd = StockDataSourceNet()

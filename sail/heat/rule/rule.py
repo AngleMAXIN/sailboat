@@ -1,16 +1,18 @@
 import time
+from collections import Counter
 from datetime import date
 from multiprocessing import Pool, cpu_count
-from collections import Counter
 
 import pandas as pd
 
-from celery_task.tasks import (insert_chance_by_ma_async,
-                               insert_chance_by_macd_async, stock_pool_update)
-from sail.util import get_ma, get_macd
+from celery_task.tasks import (insert_back_test_result_async,
+                               insert_chance_by_ma_async,
+                               insert_chance_by_macd_async,
+                               stock_pool_update)
 from sail.water import StockDataSourceDB
-from .chance import select_time_by_ma, select_time_by_macd, select_time_by_kdj
-from sail.db import db
+
+from .chance import select_time_by_kdj, select_time_by_ma, select_time_by_macd
+
 __all__ = ['Rule', 'BackTestRule']
 
 
@@ -30,6 +32,9 @@ class Rule:
 
         self._compute_macd_func = select_time_by_macd
         self._compute_ma_func = select_time_by_ma
+        self._compute_kdj_func = select_time_by_kdj
+
+        self._get_raw_close()
 
     def _get_raw_close(self, limit=0):
         if self.latest:
@@ -37,23 +42,22 @@ class Rule:
             stock_pool_update()
 
         source = self.db_source
-        stock_codes = source.get_stock_pool().get("stock_set")
+        stock_codes = source.get_stock_pool().get("stock_set")[:2]
         if limit > 0:
             stock_codes = stock_codes[:limit]
-        raw_data = source.get_batch_stock_close(stock_codes)
-        return raw_data
+        self.raw_data = source.get_batch_stock_close(stock_codes)
 
     def compute_stock_pool_macd(self):
         rule = "macd"
-        self._compute(self._get_raw_close(), rule)
+        self._compute(self.raw_data, rule)
 
     def compute_stock_pool_ma(self):
         rule = "ma"
-        self._compute(self._get_raw_close(), rule)
+        self._compute(self.raw_data, rule)
 
     def compute_stock_pool_kdj(self):
         rule = "kdj"
-        self._compute(self._get_raw_close(), rule)
+        self._compute(self.raw_data, rule)
 
     def _compute(self, raw_data, rule_type="macd"):
 
@@ -61,21 +65,25 @@ class Rule:
             f = self._compute_macd_func
         elif rule_type == "ma":
             f = self._compute_ma_func
+        elif rule_type == "kdj":
+            f = self._compute_kdj_func
         else:
-            print("error rule:", rule_type)
             return
 
-        # print(raw_data)
         start_time = time.time()
         for code, data in raw_data:
-            self.pool.apply_async(func=f, args=(code, data,))
+            # f(code,data)
+            self.data = data
+            # self.pool.apply_async(func=f, args=(code, data,))
         self.pool.close()
         self.pool.join()
 
         print("compiter {0} end, time cost: {1:.2f}s \n{2}".format(rule_type,
                                                                    time.time() - start_time, "=" * 35))
 
-
+    def get_df(self):
+        return self.data
+        
 class BackTestRule:
     """
         对按照macd计算得来的买卖点进行回测
@@ -95,10 +103,11 @@ class BackTestRule:
         self.base_initial_cap = 10000
 
         self.initial_capital = self.base_initial_cap * self.stock_count
+        from collections import defaultdict
 
-        self.up_stock_set = []
+        self.up_stock_set = defaultdict(list)
 
-        self.down_stock_set = []
+        self.down_stock_set = defaultdict(list)
 
         self.init_data_set = None
 
@@ -121,35 +130,33 @@ class BackTestRule:
             result = self.db_source.get_macd_rule_stock(self.stock_set)
         elif _type == "ma":
             result = self.db_source.get_ma_rule_stock(self.stock_set)
+        elif _type == "kdj":
+            result = self.db_source.get_kdj_rule_stock(self.stock_set)
 
         init_data_set = ((macd.get("stock_code"), macd.get(
             "macd_set"), macd.get("size"), self.base_initial_cap) for macd in result)
         self.init_data_set = init_data_set
 
     def _save_result(self):
-        up_stock_state = Counter(self.up_stock_set)
-        down_stock_state = Counter(self.down_stock_set)
 
         test_result = {
             "date": date.today().isoformat(),
-            "up_stock_set": {"stock_set": up_stock_set.most_common(), "total": len(up_stock_set)},
-            "down_stock_set": {"stock_set": down_stock_set.most_common(), "total": len(down_stock_set)},
+            "up_stock_set": {"stock_set": self.up_stock_set, "total": len(self.up_stock_set)},
+            "down_stock_set": {"stock_set": self.down_stock_set, "total": len(self.down_stock_set)},
         }
-
+        insert_back_test_result_async.delay(test_result)
 
     def back_test(self):
-        _types = ("ma","macd","kdj",)
+        
+        _types = ("ma", "macd", "kdj",)
         for t in _types:
-            self._prepare_test_cases(_type)
-            self._back_test()
+            self._curr_rule = t
+            self._prepare_test_cases(t)
+            self._run()
 
         self._save_result()
 
-#         print("盈利股票: {}只， 亏损股票: {}只".format(
-#             len(self.up_stock_set), len(self.down_stock_set)))down_stock_set
-
-
-    def _back_test(self):
+    def _run(self):
         for code, macd_set, _, base_cap in self.init_data_set:
             self.back_test_one_stock(code, macd_set, base_cap)
 
@@ -173,21 +180,21 @@ class BackTestRule:
                     test_case_set[i][0], price, initial_capital))
 
         cur_price = test_case_set[-1][1]
-        open_funds = initial_capital + buy_num * cur_price
+        balance = initial_capital + buy_num * cur_price
 
-        profitababilty = ((open_funds-start_initial_cap) /
+        profitabilty = ((balance-start_initial_cap) /
                           start_initial_cap) * 100
         result = {
+            "rule":self._curr_rule,
             "stock_code": stock_code,
-            "balance:": open_funds,
-            "profitability": profitababilty,
+            "start_initial_cap":start_initial_cap,
+            "balance:": balance,
+            "profitability": profitabilty,
         }
-        if profitababilty > 0:
-            self.up_stock_set.append(result)
-            print("盈利", end=" ")
+        if profitabilty > 0:
+            self.up_stock_set[stock_code].append(result)
         else:
-            self.down_stock_set.append(result)
-            print("亏损", end=" ")
+            self.down_stock_set[stock_code].append(result)
 
         print("stock code: {0},finally balance: {1:.2f},\tprofitability: {2:.2f}".format(
-            stock_code, open_funds, profitababilty))
+            stock_code, balance, profitabilty))
