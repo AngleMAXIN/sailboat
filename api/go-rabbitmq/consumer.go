@@ -1,9 +1,17 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/streadway/amqp"
 	"log"
 )
+
+
+type msg struct{
+	Name  string `json:"name,omitempty"`
+	Count int    `json:"count,omitempty"`
+	List  []int  `json:"list,omitempty"`
+}
 
 func main(){
 	// 连接RabbitMQ服务器
@@ -39,7 +47,9 @@ func main(){
 
 	go func() {
 		for d := range msgs {
-			log.Printf("Received a message: %s", d.Body)
+			m := msg{} 
+			json.Unmarshal(d.Body, &m)
+			log.Println("Received a message:", m)
 		}
 	}()
 
