@@ -4,5 +4,4 @@ import "api-server/server"
 
 func main() {
 	server.StartServer()
-
 }

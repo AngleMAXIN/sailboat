@@ -2,12 +2,10 @@ package server
 
 import (
 	"context"
-	"errors"
 	"log"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
-
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -62,42 +60,38 @@ func (db *dbInstance) GetStockPoolData() (interface{}, error) {
 	resultSet := &stockPoolResult{}
 	c, _ := db.client.Database(db.dbName).Collection(db.stockPoolColl).Clone()
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
 
 	option := options.FindOne().SetSort(bson.D{{"_id", -1}})
 
 	err := c.FindOne(ctx, bson.D{},option).Decode(resultSet)
-
 	select {
 	case <-ctx.Done():
-		err = errors.New("find timeout")
-	default:
-
+		log.Println(err)
 	}
-
 	if err != nil {
-		log.Println("db error:", err.Error())
+		return nil,err
 	}
-	return resultSet, err
+	return resultSet, nil
 }
 
 // GetBackTestResultData 获取回测结果
 func (db *dbInstance) GetBackTestResultData() (interface{}, error) {
 	
-	singleResult := &backTestResult{}
 	c, _ := db.client.Database(db.dbName).Collection(db.backTestColl).Clone()
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Microsecond*3000)
 	defer cancel()
 
 	option := options.FindOne().SetSort(bson.D{{"_id", -1}})
-
+	singleResult := &backTestResult{}
 	err := c.FindOne(ctx, bson.D{},option).Decode(singleResult)
 
 	select {
 	case <-ctx.Done():
-		err = errors.New("find timeout")
+		err = ctx.Err()
 	default:
 
 	}

@@ -16,6 +16,7 @@ func getStockPoolDataHandler(ctx *gin.Context) {
 	code := resCodeOk
 	stockPoolData, err := DB.GetStockPoolData()
 	if err != nil {
+		log.Printf("%v",err)
 		code = resCodeNotResource
 	}
 	response := makeResponse(code, stockPoolData)
