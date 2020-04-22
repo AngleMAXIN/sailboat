@@ -15,7 +15,7 @@ type msg struct{
 
 func main(){
 	// 连接RabbitMQ服务器
-	conn, err := amqp.Dial("amqp://guest:guest@127.0.0.1:5672/")
+	conn, err := amqp.Dial("amqp://guest:guest@127.0.0.1:5672//test")
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
 	// 创建一个channel
