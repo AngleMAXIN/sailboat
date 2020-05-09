@@ -43,4 +43,6 @@ const (
 	// DBconnURI = "mongodb://39.106.120.138:27017"
 	// DBName 数据库连接名称
 	DBName = "sailboat_db"
+	// Coll 表名
+	Coll = "stock_1"
 )

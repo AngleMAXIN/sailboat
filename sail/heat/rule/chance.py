@@ -66,6 +66,22 @@ def set_trading_time_ma(df):
     return df
 
 
+def set_trading_time_kdj(df):
+    s2 = df["kdj_k"] > df["kdj_d"]
+    s1 = df["kdj_k"] < df["kdj_d"]
+
+    gold = df.loc[~(s1 | s2.shift(1))].index
+    death = df.loc[(s1 & s2.shift(1))].index
+    g1 = pd.Series(1, index=gold)  # 金叉标志位 1
+    d1 = pd.Series(-1, index=death)  # 死叉标志位 -1
+    gb = g1.append(d1).sort_index()
+    gb.name = "chance"
+
+    df = pd.concat([df, gb], axis=1)
+    df.dropna(axis=0, how="any", inplace=True)
+    return df
+
+
 def select_time_by_ma(code, df):
     df.drop('high', axis=1, inplace=True)
     df.drop('low', axis=1, inplace=True)
@@ -91,12 +107,16 @@ def select_time_by_ma(code, df):
 
 
 def select_time_by_kdj(code, df):
-    kdj_k, kdj_d = get_kdj(df.close.values,df.high.values,df.low.values)
+    kdj_k, kdj_d = get_kdj(df.close.values, df.high.values, df.low.values)
+    df.drop('high', axis=1, inplace=True)
+    df.drop('low', axis=1, inplace=True)
     df['kdj_k'] = kdj_k
     df['kdj_d'] = kdj_d
-
+    
+    df.dropna(axis=0, how="any", inplace=True)
+    df.reset_index(drop=False, inplace=True)
     df_time = set_trading_time_kdj(df)
-
+    
     document = {
         "date": date.today().isoformat(),
         "stock_code": code,
@@ -105,20 +125,4 @@ def select_time_by_kdj(code, df):
     }
 
     insert_chance_by_kdj_async.delay(document)
-    return df
 
-
-def set_trading_time_kdj(df):
-    s2 = (df["kdj_k"] > df["kdj_d"]) & (df['kdj_k'] < 20)
-    s1 = (df["kdj_d"] < df["kdj_k"]) & (df['kdj_d'] > 80)
-
-    gold = df.loc[~(s1 | s2.shift(1))].index
-    death = df.loc[(s1 & s2.shift(1))].index
-    g1 = pd.Series(1, index=gold)  # 金叉标志位 1
-    d1 = pd.Series(-1, index=death)  # 死叉标志位 -1
-    gb = g1.append(d1).sort_index()
-    gb.name = "chance"
-
-    df = pd.concat([df, gb], axis=1)
-    df.dropna(axis=0, how="any", inplace=True)
-    return df

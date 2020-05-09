@@ -25,7 +25,9 @@ class DB:
         self.client = MongoClient(self.url, maxPoolSize=40)
         self.db = self.client.sailboat_db
 
-        self.is_clean = False
+        self.macd_is_clean = False
+        self.ma_is_clean = False
+        self.kdj_is_clean = False
 
     def insert_stock_pool(self, document, coll_name=""):
         """
@@ -81,10 +83,10 @@ class DB:
         """
 
         coll = coll_name if coll_name else self.STOCK_MACD_COLL
-        if not self.is_clean:
+        if not self.macd_is_clean:
             # 清除以往的数据，保证每一次计算都是最新的数据
             self.db[coll].drop()
-            self.is_clean = True
+            self.macd_is_clean = True
 
         _filter = {"date": document['date'],
                   "stock_code": document['stock_code']}
@@ -103,11 +105,11 @@ class DB:
         """
 
         coll = coll_name if coll_name else self.STOCK_MA_COLL
-        if not self.is_clean:
+        if not self.ma_is_clean:
             print("clean data:",self.is_clean)
             # 清除以往的数据，保证每一次计算都是最新的数据
             self.db[coll].drop()
-            self.is_clean = True
+            self.ma_is_clean = True
 
         _filter = {"date": document['date'],
                   "stock_code": document['stock_code']}
@@ -126,10 +128,10 @@ class DB:
         """
 
         coll = coll_name if coll_name else self.STOCK_KDJ_COLL
-        if not self.is_clean:
+        if not self.kdj_is_clean:
             # 清除以往的数据，保证每一次计算都是最新的数据
             self.db[coll].drop()
-            self.is_clean = True
+            self.kdj_is_clean = True
 
         _filter = {"date": document['date'],
                   "stock_code": document['stock_code']}

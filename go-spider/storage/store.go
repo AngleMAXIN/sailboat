@@ -89,7 +89,7 @@ func (s *storage) StartSaveProcess() {
 	var stockInsertNum uint
 	log.Println("saver start recevied data to save ...")
 	for result := range s.StockDetailRusultChan {
-		s.insertOne("stock_big", result)
+		s.insertOne(config.Coll, result)
 		stockInsertNum++
 	}
 

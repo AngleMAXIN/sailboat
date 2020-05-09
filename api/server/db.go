@@ -60,41 +60,30 @@ func (db *dbInstance) GetStockPoolData() (interface{}, error) {
 	resultSet := &stockPoolResult{}
 	c, _ := db.client.Database(db.dbName).Collection(db.stockPoolColl).Clone()
 
-
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
 
 	option := options.FindOne().SetSort(bson.D{{"_id", -1}})
 
-	err := c.FindOne(ctx, bson.D{},option).Decode(resultSet)
-	select {
-	case <-ctx.Done():
-		log.Println(err)
-	}
+	err := c.FindOne(ctx, bson.D{}, option).Decode(resultSet)
+
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 	return resultSet, nil
 }
 
 // GetBackTestResultData 获取回测结果
 func (db *dbInstance) GetBackTestResultData() (interface{}, error) {
-	
+
 	c, _ := db.client.Database(db.dbName).Collection(db.backTestColl).Clone()
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Microsecond*3000)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
 
 	option := options.FindOne().SetSort(bson.D{{"_id", -1}})
 	singleResult := &backTestResult{}
-	err := c.FindOne(ctx, bson.D{},option).Decode(singleResult)
-
-	select {
-	case <-ctx.Done():
-		err = ctx.Err()
-	default:
-
-	}
+	err := c.FindOne(ctx, bson.D{}, option).Decode(singleResult)
 
 	if err != nil {
 		log.Println("db error:", err.Error())
@@ -102,4 +91,3 @@ func (db *dbInstance) GetBackTestResultData() (interface{}, error) {
 	return singleResult, err
 
 }
-
