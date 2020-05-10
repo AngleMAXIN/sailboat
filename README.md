@@ -20,3 +20,9 @@
         - macd (dif- dea)计算出金叉和死叉的时间点
             - 金叉 (dif-dea) < 0 and (dif-dea) > 0
             - 死叉 (dif-dea) > 0 and (dif-dea) < 0
+
+### 定时/异步任务
+`
+> celery -A celery_task worker -l info
+> celery -A celery_task beat -l info
+`

@@ -1,0 +1,15 @@
+version: '2'
+services:
+  nginx:
+    restart: always
+    image: nginx:1.11.6-alpine
+    ports:
+      - 80:80
+    volumes:
+      - ./conf:/etc/nginx/demo/
+      - ./log:/var/log/nginx
+      - ./build:/var/www/build
+    command: 
+      - nginx 
+      - -c 
+      - /etc/nginx/demo/nginx.conf

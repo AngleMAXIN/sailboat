@@ -1,0 +1,70 @@
+2020/05/10 02:10:02 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:10:03 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:10:04 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:10:05 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:10:07 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:10:09 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:10:13 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:10:20 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:10:33 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:11:00 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:11:52 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:12:53 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:13:07 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:13:08 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:13:09 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:13:10 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:13:12 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:13:14 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:13:18 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:13:26 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:13:39 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:14:05 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:14:57 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:25:53 [emerg] 1#1: getpwnam("www") failed in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:25:54 [emerg] 1#1: getpwnam("www") failed in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:25:55 [emerg] 1#1: getpwnam("www") failed in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:25:57 [emerg] 1#1: getpwnam("www") failed in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:25:58 [emerg] 1#1: getpwnam("www") failed in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:26:01 [emerg] 1#1: getpwnam("www") failed in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:26:05 [emerg] 1#1: getpwnam("www") failed in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:26:12 [emerg] 1#1: getpwnam("www") failed in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:37:30 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:37:31 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:37:32 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:37:33 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:37:34 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:37:37 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:37:41 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:37:48 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:38:02 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:38:13 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:38:14 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:38:15 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:38:16 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:38:17 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:38:20 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:38:24 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:38:31 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:38:45 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:39:11 [emerg] 1#1: "user" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:1
+2020/05/10 02:39:26 [emerg] 1#1: "events" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:4
+2020/05/10 02:39:27 [emerg] 1#1: "events" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:4
+2020/05/10 02:39:28 [emerg] 1#1: "events" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:4
+2020/05/10 02:39:29 [emerg] 1#1: "events" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:4
+2020/05/10 02:39:31 [emerg] 1#1: "events" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:4
+2020/05/10 02:39:33 [emerg] 1#1: "events" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:4
+2020/05/10 02:39:37 [emerg] 1#1: "events" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:4
+2020/05/10 02:39:44 [emerg] 1#1: "events" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:4
+2020/05/10 02:39:58 [emerg] 1#1: "events" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:4
+2020/05/10 02:40:25 [emerg] 1#1: "events" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:4
+2020/05/10 02:40:54 [emerg] 1#1: "http" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:8
+2020/05/10 02:40:55 [emerg] 1#1: "http" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:8
+2020/05/10 02:40:56 [emerg] 1#1: "http" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:8
+2020/05/10 02:40:58 [emerg] 1#1: "http" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:8
+2020/05/10 02:40:59 [emerg] 1#1: "http" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:8
+2020/05/10 02:41:02 [emerg] 1#1: "http" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:8
+2020/05/10 02:41:06 [emerg] 1#1: "http" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:8
+2020/05/10 02:41:13 [emerg] 1#1: "http" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:8
+2020/05/10 02:41:27 [emerg] 1#1: "http" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:8
+2020/05/10 02:41:53 [emerg] 1#1: "http" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:8
