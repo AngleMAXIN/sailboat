@@ -68,3 +68,6 @@
 2020/05/10 02:41:13 [emerg] 1#1: "http" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:8
 2020/05/10 02:41:27 [emerg] 1#1: "http" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:8
 2020/05/10 02:41:53 [emerg] 1#1: "http" directive is not allowed here in /etc/nginx/conf.d/nginx.conf:8
+2020/05/10 07:16:36 [error] 6#6: *34 could not find named location "@router", client: 172.30.0.1, server: _, request: "GET /cgi/reccom?id=5F3B3888C35E0355C9F041B17F77A621DFC2632338838AF52E6B943ADFA7DBF8 HTTP/1.1", host: "tj.b.qq.com"
+2020/05/10 07:16:40 [error] 6#6: *35 could not find named location "@router", client: 172.30.0.1, server: _, request: "GET /search.xml HTTP/1.1", host: "tj.b.qq.com"
+2020/05/10 07:17:18 [error] 6#6: *36 could not find named location "@router", client: 172.30.0.1, server: _, request: "GET /cgi-bin/memo_reminder_sync?uin=1285590084&clientkey=2FF9EFA3B779E1433FD656D8A6FEF7D401F60D40CC88E6A7A644042EA9BF52F1&localtime=1589095028&src=10 HTTP/1.1", host: "tixing5.qq.com"

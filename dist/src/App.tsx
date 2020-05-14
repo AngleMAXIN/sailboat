@@ -3,8 +3,8 @@ import { Typography, Card, Tag, Row, Col, message, Space } from 'antd';
 import dataMock from './data.json';
 
 function request(): Promise<ResponseType> {
-  // return fetch('http://127.0.0.1:8081/api.v1/stock-pool').then(response => response.json()).catch(error => ({code: 500, msg: error.toString()}))
-  return fetch('http://62.234.123.212:10001/api/BusinessCate').then(response => dataMock).catch(error => ({code: 500, msg: error.toString()}))
+  return fetch('http://127.0.0.1:8081/api.v1/stock-pool').then(response => response.json()).catch(error => ({code: 500, msg: error.toString()}))
+  // return fetch('http://62.234.123.212:10001/api/BusinessCate').then(response => dataMock).catch(error => ({code: 500, msg: error.toString()}))
 }
 
 interface ResponseType {
