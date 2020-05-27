@@ -44,7 +44,7 @@ def select_time_by_macd(code, df):
         "date": date.today().isoformat(),
         "stock_code": code,
         "size": int(df_time.shape[0]),
-        "macd_set": df_time.values.tolist(),
+        "stock_set": df_time.values.tolist(),
     }
 
     insert_chance_by_macd_async.delay(document)
@@ -100,7 +100,7 @@ def select_time_by_ma(code, df):
         "date": date.today().isoformat(),
         "stock_code": code,
         "size": int(df_time.shape[0]),
-        "macd_set": df_time.values.tolist(),
+        "stock_set": df_time.values.tolist(),
     }
 
     insert_chance_by_ma_async.delay(document)
@@ -121,7 +121,7 @@ def select_time_by_kdj(code, df):
         "date": date.today().isoformat(),
         "stock_code": code,
         "size": int(df_time.shape[0]),
-        "macd_set": df_time.values.tolist(),
+        "stock_set": df_time.values.tolist(),
     }
 
     insert_chance_by_kdj_async.delay(document)

@@ -36,6 +36,7 @@ class StockPool:
 
     def get_pool(self):
         df = self._get_raw_data()
+        print(df[self.pe])
         if self.pe:
             self.pool_stock = df[(df[self.pe] > self.pe_level)
                                  & (df[self.pe] < self.pe_top)]

@@ -44,7 +44,7 @@ const App = () => {
         </Typography>
       </div>
       
-      <Card style={{width: '70%', background: '#DEE6F5'}}>
+      <Card style={{width: '80%', background: '#DEE6F5'}}>
         <Card style={{width: '100%'}}>
           <Row gutter={[16, 24]}>
             {

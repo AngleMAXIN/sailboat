@@ -90,7 +90,7 @@ class DB:
 
         _filter = {"date": document['date'],
                   "stock_code": document['stock_code']}
-        update = {"$set": {"macd_set": document['macd_set']}}
+        update = {"$set": {"stock_set": document['stock_set']}}
 
         return self._insert(_filter, update, document, coll)
 
@@ -106,14 +106,14 @@ class DB:
 
         coll = coll_name if coll_name else self.STOCK_MA_COLL
         if not self.ma_is_clean:
-            print("clean data:",self.is_clean)
+            print("clean data:",self.ma_is_clean)
             # 清除以往的数据，保证每一次计算都是最新的数据
             self.db[coll].drop()
             self.ma_is_clean = True
 
         _filter = {"date": document['date'],
                   "stock_code": document['stock_code']}
-        update = {"$set": {"macd_set": document['macd_set']}}
+        update = {"$set": {"stock_set": document['stock_set']}}
 
         return self._insert(_filter, update, document, coll)
 
@@ -135,7 +135,7 @@ class DB:
 
         _filter = {"date": document['date'],
                   "stock_code": document['stock_code']}
-        update = {"$set": {"macd_set": document['macd_set']}}
+        update = {"$set": {"stock_set": document['stock_set']}}
 
         return self._insert(_filter, update, document, coll)
 

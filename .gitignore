@@ -13,3 +13,4 @@ zxg.dat
 celerybeat-schedule
 celerybeat.pid
 *.pyc
+*.png

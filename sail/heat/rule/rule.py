@@ -10,7 +10,7 @@ from celery_task.tasks import (insert_back_test_result_async,
                                insert_chance_by_macd_async,
                                stock_pool_update)
 from sail.water import StockDataSourceDB
-
+from sail.plt import pie_back_test_result, plot_profit
 from .chance import select_time_by_kdj, select_time_by_ma, select_time_by_macd
 
 __all__ = ['Rule', 'BackTestRule']
@@ -21,7 +21,7 @@ class Rule:
     指标计算 例如MACD,MA,KDJ等
     """
 
-    def __init__(self, latest=False, from_internet=False):
+    def __init__(self, latest=False, from_internet=False,limit=0):
         # 股票来源 股票池，所有股票
         self.latest = latest
         self.from_internet = from_internet
@@ -34,7 +34,7 @@ class Rule:
         self._compute_ma_func = select_time_by_ma
         self._compute_kdj_func = select_time_by_kdj
 
-        self._get_raw_close()
+        self._get_raw_close(limit)
 
     def _get_raw_close(self, limit=0):
         if self.latest:
@@ -133,11 +133,16 @@ class BackTestRule:
             result = self.db_source.get_kdj_rule_stock(self.stock_set)
 
         init_data_set = ((macd.get("stock_code"), macd.get(
-            "macd_set"), macd.get("size"), self.base_initial_cap) for macd in result)
+            "stock_set"), macd.get("size"), self.base_initial_cap) for macd in result)
         self.init_data_set = init_data_set
 
-    def _save_result(self):
+    def clean(self, stock_dict):
+        after = {code:values for code, values in stock_dict.items() if len(stock_dict[code]) > 1}
+        return after
 
+    def _save_result(self):
+        self.up_stock_set = self.clean(self.up_stock_set)
+        self.down_stock_set = self.clean(self.down_stock_set)
         test_result = {
             "date": date.today().isoformat(),
             "up_stock_set": {"stock_set": self.up_stock_set, "total": len(self.up_stock_set)},
@@ -157,16 +162,19 @@ class BackTestRule:
             print(
                 "=================== {0} end ============================".format(t))
         self._save_result()
+        pie_back_test_result(len(self.up_stock_set), len(self.down_stock_set))
 
     def _run(self):
-        for code, macd_set, _, base_cap in self.init_data_set:
-            self.back_test_one_stock(code, macd_set, base_cap)
+        i = 0
+        for code, _set, _, base_cap in self.init_data_set:
+            self.back_test_one_stock(i,code, _set, base_cap)
+            i += 1
 
-    def back_test_one_stock(self, stock_code, test_case_set, initial_capital=10000):
+    def back_test_one_stock(self, i, stock_code, test_case_set, initial_capital=10000):
         start_initial_cap = initial_capital
         # print("=============\n",start_initial_cap,"\n=================")
         buy_num, first_up = 0, False,
-
+        change_tiems, balance_change = [], []
         for i in range(len(test_case_set)):
             chance = test_case_set[i][-1]
             price = test_case_set[i][1]
@@ -177,27 +185,32 @@ class BackTestRule:
             elif chance < 0 and first_up:
                 buy_out = price * buy_num
                 initial_capital += buy_out
+            change_tiems.append(test_case_set[i][0])
+            balance_change.append((initial_capital + buy_num * price))
 
             if self.debug:
                 print("买出时间:{}, 价格: {}，余额: {:.2f}".format(
                     test_case_set[i][0], price, initial_capital))
 
-        cur_price = test_case_set[-1][1]
-        balance = initial_capital + buy_num * cur_price
-
-        profitabilty = ((balance-start_initial_cap) /
+        profitabilty = ((balance_change[-1]-start_initial_cap) /
                         start_initial_cap) * 100
         result = {
             "rule": self._curr_rule,
             "stock_code": stock_code,
+            "date": change_tiems,
+            "balance_change": balance_change,
             "start_initial_cap": start_initial_cap,
-            "balance": int(balance),
+            "balance": balance_change[-1],
             "profitability": int(profitabilty),
         }
+        _type = ""
         if profitabilty > 0:
+            _type = "up"
             self.up_stock_set[stock_code].append(result)
         else:
+            _type = "down"
             self.down_stock_set[stock_code].append(result)
-
+        # if i < 20:
+        plot_profit(_type, stock_code, change_tiems, balance_change)
         print("stock code: {0}; finally balance: {1:.2f}; \tprofitability: {2:.2f}".format(
-            stock_code, balance, profitabilty))
+            stock_code, balance_change[-1], profitabilty))
